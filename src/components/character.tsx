@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import Phaser from 'phaser'
+import * as Phaser from 'phaser'
 import { SpriteConfig } from '@/game/types'
 
 class CharacterScene extends Phaser.Scene {

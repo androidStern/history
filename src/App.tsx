@@ -17,7 +17,6 @@ export default App
 
 function fallbackRender({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) {
   console.error(error)
-  // Call resetErrorBoundary() to reset the error boundary and retry the render.
 
   return (
     <div role="alert">

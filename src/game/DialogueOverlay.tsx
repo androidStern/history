@@ -124,7 +124,7 @@ export default function DialogueOverlay({ dialogue, choices, onChoiceSelect, goB
         <div className="flex items-center justify-between py-1">
           {showBack && (
             <>
-              <Button variant="ghost" size="xs" className="flex items-center gap-1 text-[10px] hover:bg-white/20 px-2 py-1" onClick={onGoBack}>
+              <Button variant="ghost" className="flex items-center gap-1 text-[10px] hover:bg-white/20 px-2 py-1" onClick={onGoBack}>
                 <Undo2 className="h-3 w-3" />
                 Back
               </Button>
@@ -132,14 +132,14 @@ export default function DialogueOverlay({ dialogue, choices, onChoiceSelect, goB
             </>
           )}
 
-          <Button variant="ghost" size="xs" className="flex items-center gap-1 text-[10px] hover:bg-white/20 px-2 py-1" onClick={skip}>
+          <Button variant="ghost" className="flex items-center gap-1 text-[10px] hover:bg-white/20 px-2 py-1" onClick={skip}>
             <FastForward className="h-3 w-3" />
             Skip
           </Button>
 
           <Separator orientation="vertical" className="h-4 bg-white/20" />
 
-          <Button variant="ghost" size="xs" className="flex items-center gap-1 text-[10px] hover:bg-white/20 px-2 py-1" onClick={restartDialogue}>
+          <Button variant="ghost" className="flex items-center gap-1 text-[10px] hover:bg-white/20 px-2 py-1" onClick={restartDialogue}>
             <RotateCcw className="h-3 w-3" />
             Restart
           </Button>
