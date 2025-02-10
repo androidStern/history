@@ -49,6 +49,13 @@ export default tseslint.config(
           mode: 'file'
         },
         {
+          type: 'store',
+          pattern: '*.{ts,tsx}',
+          basePattern: 'src/stores',
+          capture: ['elementName'],
+          mode: 'file'
+        },
+        {
           type: 'styles',
           pattern: '*.css',
           basePattern: 'src',
@@ -87,6 +94,10 @@ export default tseslint.config(
               from: ['app'],
               allow: ['components', 'ui-components', 'game', 'lib', 'styles', 'app']
             },
+            {
+              from: ['store'],
+              allow: ['game']
+            },
             // Game logic can import from lib and components
             {
               from: ['game'],
@@ -95,7 +106,7 @@ export default tseslint.config(
             // Components can import from lib and game (for types)
             {
               from: ['components'],
-              allow: ['lib', 'game', 'ui-components']
+              allow: ['lib', 'game', 'ui-components', 'store']
             },
             // UI components can only import from lib and components
             {

@@ -3,6 +3,7 @@ export type LayerItem = {
   imageUrl: string
   x: number
   y: number
+  zoomFactor?: number
 }
 type LayerId = 'bg' | 'mid' | 'fg'
 export type Layer = {

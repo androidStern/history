@@ -78,7 +78,7 @@ class CharacterScene extends Phaser.Scene {
   }
 }
 
-const PhaserCharacter = ({ spriteConfig, className, characterAction }: { spriteConfig: SpriteConfig; className?: string; characterAction?: string }) => {
+const PhaserCharacter = ({ spriteConfig, characterAction }: { spriteConfig: SpriteConfig; className?: string; characterAction?: string }) => {
   const phaserRef = useRef(null)
   const gameRef = useRef<Phaser.Game>(null)
   const [ready, setReady] = useState(false)
@@ -118,11 +118,7 @@ const PhaserCharacter = ({ spriteConfig, className, characterAction }: { spriteC
     }
   }, [characterAction, ready])
 
-  return (
-    <div className={className}>
-      <div ref={phaserRef}></div>
-    </div>
-  )
+  return <div data-test-id="character" ref={phaserRef}></div>
 }
 
 export default PhaserCharacter
