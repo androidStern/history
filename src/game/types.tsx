@@ -28,7 +28,7 @@ export type Scene = {
   id: string
   width: number
   layers: Layer[]
-  dialogue?: DialogueItem[]
+  dialogue: DialogueItem[]
   choices?: Choice[]
 }
 

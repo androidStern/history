@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { Scene, LayerItem as Item } from '@/game/types'
+import { Scene, LayerItem as Item, DialogueItem } from '@/game/types'
 
 import { scenes } from '../gameData'
 import { immer } from 'zustand/middleware/immer'
@@ -13,6 +13,9 @@ type PositionActions = {
   update: (sceneId: string, layerId: string, itemId: string, item: Partial<Item>) => void
   addItem: (sceneId: string, layerId: string, item: Partial<Item>) => void
   moveItem: (params: MoveItemParams) => void
+  updateDialogue: (sceneId: string, dialogItem: Partial<DialogueItem>) => void
+  moveDialogue: (params: MoveDialogueParams) => void
+  addDialogue: (sceneId: string, dialogueItem: Partial<DialogueItem>) => DialogueItem
 }
 
 type MoveItemParams = {
@@ -20,9 +23,56 @@ type MoveItemParams = {
   to: { sceneId: string; layerId: string }
 }
 
+type MoveDialogueParams = {
+  from: { sceneId: string; dialogueId: string }
+  to: { sceneId: string, index: number }
+}
+
 export const usePositionStore = create<PositionState & PositionActions>()(
   immer(set => ({
     scenes: scenes,
+    updateDialogue: (sceneId: string, newDialogue: Partial<DialogueItem>) => {
+      set(state => {
+        const dialog = state.scenes[sceneId]?.dialogue.find(d => d.id === newDialogue.id)
+
+        if (!dialog) return
+        Object.assign(dialog, newDialogue)
+      })
+    },
+    moveDialogue: ({ from, to }: MoveDialogueParams) => {
+      set(state => {
+        const fromScene = state.scenes[from.sceneId]
+        const toScene = state.scenes[to.sceneId]
+        
+        if (!fromScene || !toScene) return
+        
+        const dialogueIndex = fromScene.dialogue.findIndex(d => d.id === from.dialogueId)
+        if (dialogueIndex === -1) return
+        
+        // Remove from source scene
+        const [movedDialogue] = fromScene.dialogue.splice(dialogueIndex, 1)
+        
+        // Insert at target scene at specified index
+        toScene.dialogue.splice(to.index, 0, movedDialogue)
+      })
+    },
+    addDialogue: (sceneId: string, dialogueItem: Partial<DialogueItem>) => {
+      const completeDialogueItem: DialogueItem = {
+        id: nanoid(),
+        text: dialogueItem.text ?? '',
+        speaker: dialogueItem.speaker ?? ''
+      }
+
+      set(state => {
+        const scene = state.scenes[sceneId]
+        if (!scene) return
+        scene.dialogue.push(completeDialogueItem)
+        
+      })
+
+      return completeDialogueItem
+    },
+
     moveItem: ({ from, to }: MoveItemParams) => {
       set(state => {
         const fromScene = state.scenes[from.sceneId]

@@ -1,18 +1,114 @@
-import { create } from 'zustand'
 import { Button } from '@/components/ui/button'
 import { usePositionStore } from '@/game/hooks/positionEditsStore'
-import { Layer, LayerItem } from '@/game/types'
+import { DialogueItem, Layer, LayerItem, Scene } from '@/game/types'
 import { useAssetStore } from '@/stores/assetStore'
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, getClientRect, MeasuringConfiguration, useDraggable, useDroppable } from '@dnd-kit/core'
-import { ChevronRight, Copy, ExternalLink, File, Folder, Layers, MoreHorizontal, Plus, Trash2, Upload } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { ChevronRight, Copy, ExternalLink, File, Folder, Layers, MoreHorizontal, Plus, Trash2, Upload, X } from 'lucide-react'
+import { KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react'
+import { create } from 'zustand'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu'
 import { Sidebar, SidebarContent, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub } from './ui/sidebar'
+import { nanoid } from 'nanoid'
 
 type OptionKeyStore = {
   isOptionKeyPressed: boolean
   setOptionKeyPressed: (pressed: boolean) => void
+}
+
+interface DialogueEditorProps {
+  initialText: string
+  dialogueId: string
+  sceneId: string
+  defaultIsEditing?: boolean
+  onCancel?: () => void
+  onComplete?: () => void
+}
+
+const DialogueEditor = ({ initialText, dialogueId, sceneId, defaultIsEditing = false, onCancel, onComplete }: DialogueEditorProps) => {
+  const [isEditing, setIsEditing] = useState(defaultIsEditing)
+  const dialogue = usePositionStore(state => state.scenes[sceneId]?.dialogue.find(d => d.id === dialogueId))
+  const [text, setText] = useState(dialogue?.text ?? initialText)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const {updateDialogue, addDialogue} = usePositionStore()
+  
+
+  const handleCommit = useCallback(() => {
+    if (!dialogue) {
+      addDialogue(sceneId, { text })
+    } else {
+      updateDialogue(sceneId, { id: dialogueId, text })
+    }
+    
+    setIsEditing(false)
+    onComplete?.()
+  }, [dialogue, onComplete, addDialogue, sceneId, text, updateDialogue, dialogueId])
+
+  const handleCancel = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault()
+      e.stopPropagation()
+      // Keep focus on textarea to prevent blur
+      textareaRef.current?.focus()
+      setText(initialText)
+      // Use RAF to ensure the text is reset before closing
+      requestAnimationFrame(() => {
+        setIsEditing(false)
+        console.log('cancel')
+        onCancel?.()
+      })
+    },
+    [initialText, onCancel]
+  )
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleCommit()
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      setText(initialText)
+      setIsEditing(false)
+      onCancel?.()
+    }
+  }
+
+  if (!isEditing) {
+    return (
+      <div
+        className="min-h-[24px] px-2 py-1 cursor-pointer hover:bg-accent/50 rounded-md"
+        onClick={() => {
+          setIsEditing(true)
+          setTimeout(() => textareaRef.current?.focus(), 0)
+        }}
+      >
+        {text}
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative">
+      <textarea
+        ref={textareaRef}
+        value={text}
+        onChange={e => setText(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onBlur={e => {
+          // Only commit if the related target is not the cancel button
+          if (!(e.relatedTarget instanceof HTMLButtonElement && e.relatedTarget.dataset.action === 'cancel')) {
+            handleCommit()
+          }
+        }}
+        className="w-full min-h-[24px] px-2 py-1 rounded-md bg-accent/50 resize-none outline-none"
+        rows={Math.max(1, text.split('\n').length)}
+        autoFocus
+      />
+      <button onClick={handleCancel} data-action="cancel" className="absolute top-1 right-1 p-1 rounded-full bg-background/80 hover:bg-background text-muted-foreground hover:text-foreground">
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  )
 }
 
 const useOptionKeyStore = create<OptionKeyStore>(set => ({
@@ -143,8 +239,9 @@ export default function AssetPalette() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { assetMap, addAsset } = useAssetStore()
   const [isAssetsOpen, setIsAssetsOpen] = useState(false)
-  const { scenes, moveItem, addItem } = usePositionStore()
+  const { scenes, moveItem, addItem, addDialogue } = usePositionStore()
   const [draggedItem, setDraggedItem] = useState<DragItem | null>(null)
+  
 
   const { isOptionKeyPressed, setOptionKeyPressed } = useOptionKeyStore()
 
@@ -308,36 +405,7 @@ export default function AssetPalette() {
           <SidebarGroup>
             <SidebarMenu>
               {Object.entries(scenes).map(([sceneId, scene]) => (
-                <SidebarMenuItem key={sceneId}>
-                  <Collapsible className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90">
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuButton>
-                        <ChevronRight className="transition-transform" />
-                        <Folder className="h-4 w-4" />
-                        <span>{scene.id}</span>
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        {scene.layers.map(layer => (
-                          <DroppableLayer key={layer.id} layer={layer} sceneId={scene.id}>
-                            {layer.items.map(item => (
-                              <DraggableItem
-                                key={item.id}
-                                item={{
-                                  ...item,
-                                  parentLayerId: layer.id,
-                                  parentSceneId: scene.id,
-                                  type: 'item'
-                                }}
-                              />
-                            ))}
-                          </DroppableLayer>
-                        ))}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  </Collapsible>
-                </SidebarMenuItem>
+                <ScenesSubMenu key={sceneId} scene={scene} />
               ))}
             </SidebarMenu>
           </SidebarGroup>
@@ -353,5 +421,77 @@ export default function AssetPalette() {
         {draggedItem ? <CustomDragOverlay item={draggedItem} /> : null}
       </DragOverlay>
     </DndContext>
+  )
+}
+
+function ScenesSubMenu({ scene }: { scene: Scene }) {
+  const [draftDialogue, setDraftDialogue] = useState<DialogueItem | null>(null)
+  return (
+    <SidebarMenuItem key={scene.id}>
+      <Collapsible className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90">
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton>
+            <ChevronRight className="transition-transform" />
+            <Folder className="h-4 w-4" />
+            <span>{scene.id}</span>
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            <Collapsible className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90">
+              <div className="flex items-center">
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton>
+                    <ChevronRight className="transition-transform" />
+                    <span>Dialogue</span>
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <SidebarMenuAction
+                  showOnHover
+                  onClick={() => {
+                    setDraftDialogue({ id: nanoid(), text: '', speaker: '' })
+                  }}
+                >
+                  <Plus className="h-4 w-4" />
+                </SidebarMenuAction>
+              </div>
+
+              <CollapsibleContent>
+                <SidebarMenuSub>
+                  {draftDialogue && (
+                    <SidebarMenuItem key={draftDialogue.id + scene.id} data-dialogue-id={draftDialogue.id}>
+                      <DialogueEditor initialText={draftDialogue.text} dialogueId={draftDialogue.id} sceneId={scene.id} defaultIsEditing={true} onComplete={() => setDraftDialogue(null)} onCancel={() => setDraftDialogue(null)} />
+                    </SidebarMenuItem>
+                  )}
+                  {scene.dialogue &&
+                    scene.dialogue.map((item: DialogueItem) => (
+                      <SidebarMenuItem key={item.id + scene.id} data-dialogue-id={item.id}>
+                        <DialogueEditor initialText={item.text} dialogueId={item.id} sceneId={scene.id} />
+                      </SidebarMenuItem>
+                    ))}
+                </SidebarMenuSub>
+              </CollapsibleContent>
+            </Collapsible>
+          </SidebarMenuSub>
+          <SidebarMenuSub>
+            {scene.layers.map(layer => (
+              <DroppableLayer key={layer.id} layer={layer} sceneId={scene.id}>
+                {layer.items.map(item => (
+                  <DraggableItem
+                    key={item.id}
+                    item={{
+                      ...item,
+                      parentLayerId: layer.id,
+                      parentSceneId: scene.id,
+                      type: 'item'
+                    }}
+                  />
+                ))}
+              </DroppableLayer>
+            ))}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </Collapsible>
+    </SidebarMenuItem>
   )
 }

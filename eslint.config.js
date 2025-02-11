@@ -35,6 +35,13 @@ export default tseslint.config(
           mode: 'file'
         },
         {
+          type: 'hooks',
+          pattern: '*.{ts,tsx}',
+          basePattern: 'src/hooks',
+          capture: ['elementName'],
+          mode: 'file'
+        },
+        {
           type: 'game',
           pattern: '*.{ts,tsx}',
           basePattern: 'src/game',
@@ -111,7 +118,7 @@ export default tseslint.config(
             // UI components can only import from lib and components
             {
               from: ['ui-components'],
-              allow: ['lib', 'components']
+              allow: ['lib', 'ui-components', 'hooks']
             },
             // Lib can only import from other lib modules
             {
