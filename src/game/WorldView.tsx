@@ -23,7 +23,7 @@ export default function WorldView() {
 
   return (
     <div
-      className="relative w-full h-[600px] overflow-hidden"
+      className="relative w-full max-w-[1200px] h-[600px] overflow-hidden"
       style={{
         backgroundImage: `url(${BGPath})`,
         backgroundPosition: 'center',
@@ -32,7 +32,7 @@ export default function WorldView() {
       }}
     >
       {activeSegments.map(segment => (
-        <ParallaxLayers key={segment.id} segment={segment} cameraX={cameraX} />
+        <ParallaxLayers key={`${segment.id}-${segment.uniqueVisitId}`} segment={segment} cameraX={cameraX} />
       ))}
       <div className="absolute inset-0" style={{ pointerEvents: 'none' }}>
         <PhaserCharacter spriteConfig={heroConfig} characterAction={characterAction} />

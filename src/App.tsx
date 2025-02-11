@@ -1,29 +1,20 @@
-import { ErrorBoundary } from 'react-error-boundary'
 import './App.css'
 
 import WorldView from './game/WorldView'
 import PrintConfig from './components/print-config'
 import AssetPalette from './components/AssetPalette'
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
-import { Button } from './components/ui/button'
-import { Plus } from 'lucide-react'
+import React from 'react'
 
 function App() {
   return (
-    <ErrorBoundary fallbackRender={fallbackRender}>
-      <SidebarProvider>
+    <ErrorBoundary>
+      <SidebarProvider defaultOpen={false}>
         <AssetPalette />
-
-        <SidebarTrigger className="fixed left-4 top-4 z-50">
-          <Button variant="outline" size="icon">
-            <Plus className="h-4 w-4" />
-          </Button>
-        </SidebarTrigger>
-        <main className="flex-1 flex items-center justify-center p-4 ml-[--sidebar-width] transition-[margin] duration-200 ease-in-out group-data-[state=collapsed]/sidebar:ml-[--sidebar-width-icon]">
-          <div className="w-full max-w-[1200px]">
-            <WorldView />
-            <PrintConfig />
-          </div>
+        <SidebarTrigger />
+        <main className="w-full h-screen flex-1 flex items-center justify-center">
+          <WorldView />
+          <PrintConfig />
         </main>
       </SidebarProvider>
     </ErrorBoundary>
@@ -32,17 +23,51 @@ function App() {
 
 export default App
 
-function fallbackRender({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) {
-  console.error(error)
+interface ErrorBoundaryProps {
+  children: React.ReactNode
+}
 
-  return (
-    <div role="alert">
-      <p>Something went wrong:</p>
-      <pre style={{ color: 'red' }}>{error.message}</pre>
+interface ErrorBoundaryState {
+  hasError: boolean
+  error: Error | null
+  errorInfo: React.ErrorInfo | null
+}
 
-      {error.stack && <pre style={{ textAlign: 'left' }}>{error.stack}</pre>}
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props)
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null
+    }
+  }
 
-      <button onClick={resetErrorBoundary}>Try again</button>
-    </div>
-  )
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
+    // Update state so the next render will show the fallback UI.
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Update state with error and errorInfo
+    this.setState({
+      error,
+      errorInfo
+    })
+  }
+
+  render() {
+    if (this.state.hasError) {
+      // You can render any custom fallback UI
+      return (
+        <div role="alert">
+          <p className="text-red">Something went wrong:</p>
+          {this.state.error?.stack && <pre style={{ textAlign: 'left', color: 'red' }}>{this.state.error.stack}</pre>}
+          {this.state.errorInfo?.componentStack && <pre style={{ textAlign: 'left', color: 'red' }}>{this.state.errorInfo.componentStack}</pre>}
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
 }
