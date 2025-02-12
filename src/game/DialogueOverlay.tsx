@@ -3,7 +3,7 @@ import { gsap } from 'gsap'
 import { Button } from '@/components/ui/button'
 import { ArrowBigRightDash, Undo2, FastForward, RotateCcw } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
-import { Choice, DialogueItem } from './types'
+import { Choice, DialogueItem } from '@/game/types'
 
 interface DialogueOverlayProps {
   dialogue: DialogueItem[]

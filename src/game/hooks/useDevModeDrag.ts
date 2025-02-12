@@ -1,5 +1,5 @@
 import { useRef, MouseEvent, DragEvent, useCallback } from 'react'
-import { usePositionStore } from './positionEditsStore'
+import { usePositionStore } from '@/game/hooks/positionEditsStore'
 import { nanoid } from 'nanoid'
 
 /**

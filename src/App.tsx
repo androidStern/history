@@ -1,15 +1,18 @@
-import './App.css'
+import '@/App.css'
 
-import WorldView from './game/WorldView'
-import PrintConfig from './components/print-config'
-import AssetPalette from './components/AssetPalette'
+import WorldView from '@/game/WorldView'
+import PrintConfig from '@/components/print-config'
+import AssetPalette from '@/components/AssetPalette'
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
+import { useSidebarStore } from '@/stores/sidebarStore'
 import React from 'react'
 
 function App() {
+  const { isOpen, setIsOpen } = useSidebarStore()
+
   return (
     <ErrorBoundary>
-      <SidebarProvider defaultOpen={false}>
+      <SidebarProvider open={isOpen} onOpenChange={setIsOpen}>
         <AssetPalette />
         <SidebarTrigger />
         <main className="w-full h-screen flex-1 flex items-center justify-center">

@@ -1,4 +1,4 @@
-import { Layer } from './types'
+import { Layer } from '@/game/types'
 import { useDevModeDrag } from '@/game/hooks/useDevModeDrag'
 import { useState, useEffect, useCallback } from 'react'
 import { Expand } from 'lucide-react'

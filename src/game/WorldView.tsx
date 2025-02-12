@@ -4,7 +4,7 @@ import DialogueOverlay from '@/game/DialogueOverlay'
 import { heroConfig } from '@/game/gameData'
 import PhaserCharacter from '@/components/character'
 import { useSceneTransitions } from '@/game/hooks/hooks'
-import { usePositionStore } from './hooks/positionEditsStore'
+import { usePositionStore } from '@/game/hooks/positionEditsStore'
 
 const BGPath = '/assets/winter-bg.jpg'
 

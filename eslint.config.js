@@ -99,7 +99,7 @@ export default tseslint.config(
             // App can import from anywhere
             {
               from: ['app'],
-              allow: ['components', 'ui-components', 'game', 'lib', 'styles', 'app']
+              allow: ['components', 'ui-components', 'game', 'lib', 'styles', 'app', 'store']
             },
             {
               from: ['store'],
@@ -113,7 +113,7 @@ export default tseslint.config(
             // Components can import from lib and game (for types)
             {
               from: ['components'],
-              allow: ['lib', 'game', 'ui-components', 'store']
+              allow: ['lib', 'game', 'ui-components', 'store', 'components']
             },
             // UI components can only import from lib and components
             {
@@ -129,7 +129,29 @@ export default tseslint.config(
         }
       ],
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }]
+      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      // 'import/no-relative-parent-imports': 'error',
+      'import/no-relative-packages': 'error',
+      'import/first': 'error',
+      'import/no-duplicates': 'error',
+      'import/consistent-type-specifier-style': ['error', 'prefer-top-level'],
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['./*', '../*'],
+              message: 'Please use absolute imports with @ alias instead of relative paths'
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    files: ['src/components/ui/**/*.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off'
     }
   }
 )

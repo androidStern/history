@@ -1,4 +1,4 @@
-import { Scene, SpriteConfig } from './types'
+import { Scene, SpriteConfig } from '@/game/types'
 
 const canyonRockPath = '/assets/craftpix-net-675652-free-rocks-pixel-art-asset-pack/canyon_rocks/canyon_rock1.png'
 
@@ -83,7 +83,7 @@ export const scenes: Record<string, Scene> = {
     ],
     dialogue: [
       {
-        id: 'dlg1',
+        id: 'dlg3',
         speaker: 'Narrator',
         text: 'The desert reveals a harsh beauty under the blazing sun.'
       }
