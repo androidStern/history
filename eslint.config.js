@@ -9,7 +9,12 @@ import boundaries from 'eslint-plugin-boundaries'
 export default tseslint.config(
   { ignores: ['dist'] },
   {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended, importPlugin.flatConfigs.recommended, importPlugin.flatConfigs.typescript],
+    extends: [
+      js.configs.recommended,
+      ...tseslint.configs.recommended,
+      importPlugin.flatConfigs.recommended,
+      importPlugin.flatConfigs.typescript
+    ],
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2020,
@@ -99,7 +104,15 @@ export default tseslint.config(
             // App can import from anywhere
             {
               from: ['app'],
-              allow: ['components', 'ui-components', 'game', 'lib', 'styles', 'app', 'store']
+              allow: [
+                'components',
+                'ui-components',
+                'game',
+                'lib',
+                'styles',
+                'app',
+                'store'
+              ]
             },
             {
               from: ['store'],
@@ -108,7 +121,7 @@ export default tseslint.config(
             // Game logic can import from lib and components
             {
               from: ['game'],
-              allow: ['game', 'lib', 'components', 'ui-components']
+              allow: ['game', 'lib', 'components', 'ui-components', 'store']
             },
             // Components can import from lib and game (for types)
             {
@@ -129,7 +142,10 @@ export default tseslint.config(
         }
       ],
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true }
+      ],
       // 'import/no-relative-parent-imports': 'error',
       'import/no-relative-packages': 'error',
       'import/first': 'error',
@@ -138,10 +154,19 @@ export default tseslint.config(
       'no-restricted-imports': [
         'error',
         {
+          paths: [
+            {
+              name: '@dnd-kit/core',
+              importNames: ['useDroppable', 'useDraggable'],
+              message:
+                'Please use our type-safe hooks from @/dnd-system instead: useSystemDroppable and useSystemDraggable'
+            }
+          ],
           patterns: [
             {
               group: ['./*', '../*'],
-              message: 'Please use absolute imports with @ alias instead of relative paths'
+              message:
+                'Please use absolute imports with @ alias instead of relative paths'
             }
           ]
         }

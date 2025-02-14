@@ -2,10 +2,10 @@ import '@/App.css'
 
 import WorldView from '@/game/WorldView'
 import PrintConfig from '@/components/print-config'
-import AssetPalette from '@/components/AssetPalette'
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { useSidebarStore } from '@/stores/sidebarStore'
 import React from 'react'
+import { GameEditorSidebar } from '@/components/Sidebarv2/GameEditorSidebar'
 
 function App() {
   const { isOpen, setIsOpen } = useSidebarStore()
@@ -13,7 +13,7 @@ function App() {
   return (
     <ErrorBoundary>
       <SidebarProvider open={isOpen} onOpenChange={setIsOpen}>
-        <AssetPalette />
+        <GameEditorSidebar />
         <SidebarTrigger />
         <main className="w-full h-screen flex-1 flex items-center justify-center">
           <WorldView />

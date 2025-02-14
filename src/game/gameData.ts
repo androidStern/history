@@ -1,28 +1,65 @@
-import { Scene, SpriteConfig } from '@/game/types'
+import { Scene, SpriteConfig, Layer } from '@/game/types'
 
 const canyonRockPath = '/assets/craftpix-net-675652-free-rocks-pixel-art-asset-pack/canyon_rocks/canyon_rock1.png'
 
-export const scenes: Record<string, Scene> = {
+const DEFAULT_LAYERS = ['bg', 'mid', 'fg'] as const
+
+const getDefaultLayer = (id: (typeof DEFAULT_LAYERS)[number]): Layer => ({
+  id,
+  name: id.charAt(0).toUpperCase() + id.slice(1), // Capitalize first letter for name
+  parallaxFactor: id === 'bg' ? 0.5 : id === 'mid' ? 0.8 : 1.2,
+  items: []
+})
+
+const applyDefaults = (scene: Scene): Scene => {
+  // Ensure all required layers exist with defaults
+  const existingLayers = new Set(scene.layers?.map(l => l.id))
+  const defaultedLayers = [...(scene.layers || [])]
+
+  for (const layerId of DEFAULT_LAYERS) {
+    if (!existingLayers.has(layerId)) {
+      defaultedLayers.push(getDefaultLayer(layerId))
+    }
+  }
+
+  // Sort layers to maintain consistent order
+  defaultedLayers.sort((a, b) => {
+    const aIndex = DEFAULT_LAYERS.indexOf(a.id as (typeof DEFAULT_LAYERS)[number])
+    const bIndex = DEFAULT_LAYERS.indexOf(b.id as (typeof DEFAULT_LAYERS)[number])
+    return aIndex - bIndex
+  })
+
+  return {
+    ...scene,
+    name: scene.name || `Scene ${scene.id}`, // Default name if missing
+    layers: defaultedLayers,
+    dialogue: scene.dialogue || [],
+    choices: scene.choices || []
+  }
+}
+
+const rawScenes: Record<string, Scene> = {
   sceneA: {
     id: 'sceneA',
+    name: 'Forest Scene',
     width: 2000,
     layers: [
       {
         id: 'bg',
         parallaxFactor: 0.5,
-        items: [{ id: 'bg1', imageUrl: canyonRockPath, x: 300, y: 400 }]
+        items: [{ id: 'bg1', url: canyonRockPath, name: 'Canyon Rock', x: 300, y: 400 }]
       },
       {
         id: 'mid',
         parallaxFactor: 0.8,
-        items: [{ id: 'treeCluster2', imageUrl: '/assets/trees_mid.png', x: 800, y: 50 }]
+        items: [{ id: 'treeCluster2', url: '/assets/trees_mid.png', name: 'Tree Cluster Mid', x: 800, y: 50 }]
       },
       {
         id: 'fg',
         parallaxFactor: 1.2,
         items: [
-          { id: 'fg1', imageUrl: '/assets/trees_fg.png', x: 0, y: 0 },
-          { id: 'rock', imageUrl: '/assets/rock.png', x: 400, y: 200 }
+          { id: 'fg1', url: '/assets/trees_fg.png', name: 'Trees Foreground', x: 0, y: 0 },
+          { id: 'rock', url: '/assets/rock.png', name: 'Rock', x: 400, y: 200 }
         ]
       }
     ],
@@ -54,6 +91,7 @@ export const scenes: Record<string, Scene> = {
   },
   sceneB: {
     id: 'sceneB',
+    name: 'Desert Scene',
     width: 2200,
     layers: [
       {
@@ -62,7 +100,8 @@ export const scenes: Record<string, Scene> = {
         items: [
           {
             id: 'bg-1',
-            imageUrl: '/assets/desert_bg.png',
+            url: '/assets/desert_bg.png',
+            name: 'Desert Background',
             x: 250,
             y: 0
           }
@@ -74,7 +113,8 @@ export const scenes: Record<string, Scene> = {
         items: [
           {
             id: 'fg-1',
-            imageUrl: '/assets/desert_fg.png',
+            url: '/assets/desert_fg.png',
+            name: 'Desert Foreground',
             x: 450,
             y: 0
           }
@@ -96,6 +136,16 @@ export const scenes: Record<string, Scene> = {
       }
     ]
   }
+}
+
+export const loadGameData = (): Record<string, Scene> => {
+  const processedScenes: Record<string, Scene> = {}
+
+  for (const [sceneId, scene] of Object.entries(rawScenes)) {
+    processedScenes[sceneId] = applyDefaults(scene)
+  }
+
+  return processedScenes
 }
 
 const frameRate = 20

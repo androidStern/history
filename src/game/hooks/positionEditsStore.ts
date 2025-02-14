@@ -1,8 +1,8 @@
-import { DialogueItem, LayerItem as Item, Scene } from '@/game/types'
+import { Dialogue, LayerItem as Item, Scene } from '@/game/types'
 import { nanoid } from 'nanoid'
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
-import { scenes } from '@/game/gameData'
+import { loadGameData } from '@/game/gameData'
 
 type PositionState = {
   scenes: Record<string, Scene>
@@ -11,14 +11,19 @@ type PositionState = {
 
 type PositionActions = {
   // Items (images)
-  update: (sceneId: string, layerId: string, itemId: string, item: Partial<Item>) => void
-  addItem: (sceneId: string, layerId: string, item: Partial<Item>) => void
+  update: (
+    sceneId: string,
+    layerId: string,
+    itemId: string,
+    item: Partial<Item>
+  ) => void
+
   moveItem: (params: MoveItemParams) => void
   deleteItem: (sceneId: string, layerId: string, itemId: string) => void
   // Dialogue
-  updateDialogue: (sceneId: string, dialogItem: Partial<DialogueItem>) => void
+  updateDialogue: (sceneId: string, dialogItem: Partial<Dialogue>) => void
   moveDialogue: (params: MoveDialogueParams) => void
-  addDialogue: (sceneId: string, dialogueItem: Partial<DialogueItem>) => DialogueItem
+  addDialogue: (sceneId: string, dialogueItem: Partial<Dialogue>) => Dialogue
   deleteDialogue: (sceneId: string, dialogueId: string) => void
   //Snapshots
   takeSnapshot: () => void
@@ -38,7 +43,7 @@ type MoveDialogueParams = {
 
 export const usePositionStore = create<PositionState & PositionActions>()(
   immer(set => ({
-    scenes: scenes,
+    scenes: loadGameData(),
     snapshot: null,
     takeSnapshot: () => {
       set(state => {
@@ -56,9 +61,11 @@ export const usePositionStore = create<PositionState & PositionActions>()(
         state.snapshot = null
       })
     },
-    updateDialogue: (sceneId: string, newDialogue: Partial<DialogueItem>) => {
+    updateDialogue: (sceneId: string, newDialogue: Partial<Dialogue>) => {
       set(state => {
-        const dialog = state.scenes[sceneId]?.dialogue.find(d => d.id === newDialogue.id)
+        const dialog = state.scenes[sceneId]?.dialogue.find(
+          d => d.id === newDialogue.id
+        )
 
         if (!dialog) return
         Object.assign(dialog, newDialogue)
@@ -71,7 +78,9 @@ export const usePositionStore = create<PositionState & PositionActions>()(
 
         if (!fromScene || !toScene) return
 
-        const dialogueIndex = fromScene.dialogue.findIndex(d => d.id === from.dialogueId)
+        const dialogueIndex = fromScene.dialogue.findIndex(
+          d => d.id === from.dialogueId
+        )
         if (dialogueIndex === -1) return
 
         const [movedDialogue] = fromScene.dialogue.splice(dialogueIndex, 1)
@@ -79,8 +88,8 @@ export const usePositionStore = create<PositionState & PositionActions>()(
         toScene.dialogue.splice(to.index, 0, movedDialogue)
       })
     },
-    addDialogue: (sceneId: string, dialogueItem: Partial<DialogueItem>) => {
-      const completeDialogueItem: DialogueItem = {
+    addDialogue: (sceneId: string, dialogueItem: Partial<Dialogue>) => {
+      const completeDialogueItem: Dialogue = {
         id: nanoid(),
         text: dialogueItem.text ?? '',
         speaker: dialogueItem.speaker ?? ''
@@ -98,7 +107,9 @@ export const usePositionStore = create<PositionState & PositionActions>()(
       set(state => {
         const scene = state.scenes[sceneId]
         if (!scene) return
-        state.scenes[sceneId].dialogue = scene.dialogue.filter(d => d.id !== dialogueId)
+        state.scenes[sceneId].dialogue = scene.dialogue.filter(
+          d => d.id !== dialogueId
+        )
       })
     },
     deleteItem: (sceneId: string, layerId: string, itemId: string) => {
@@ -127,27 +138,13 @@ export const usePositionStore = create<PositionState & PositionActions>()(
         fromLayer.items.splice(index, 1)
       })
     },
-    addItem: (sceneId: string, layerId: string, newItem: Partial<Item>) => {
-      set(state => {
-        if (!newItem.imageUrl) return
 
-        const scene = state.scenes[sceneId]
-        if (!scene) return
-        const layer = scene.layers.find(l => l.id === layerId)
-        if (!layer) return
-
-        const completeItem: Item = {
-          id: nanoid(),
-          imageUrl: newItem.imageUrl,
-          x: newItem.x ?? 0, // Default to 0 if not provided
-          y: newItem.y ?? 0, // Default to 0 if not provided
-          zoomFactor: newItem.zoomFactor // Optional, can be undefined
-        }
-
-        layer.items.push(completeItem)
-      })
-    },
-    update: (sceneId: string, layerId: string, itemId: string, newItem: Partial<Item>) => {
+    update: (
+      sceneId: string,
+      layerId: string,
+      itemId: string,
+      newItem: Partial<Item>
+    ) => {
       set(state => {
         const layer = state.scenes[sceneId].layers.find(l => l.id === layerId)
         if (!layer) return

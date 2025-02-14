@@ -1,6 +1,7 @@
 import { useRef, MouseEvent, DragEvent, useCallback } from 'react'
-import { usePositionStore } from '@/game/hooks/positionEditsStore'
 import { nanoid } from 'nanoid'
+import { useGameStore } from '@/stores/useGameStore'
+import { Layer, Scene } from '@/game/types'
 
 /**
  * Returns:
@@ -9,12 +10,12 @@ import { nanoid } from 'nanoid'
  *  - A function to export all changes
  */
 export function useDevModeDrag(devMode: boolean) {
-  const { scenes, update } = usePositionStore()
+  const { scenes, update } = useGameStore()
 
   // For tracking an in-progress drag
   const dragRef = useRef<{
-    sceneId: string
-    layerId: string
+    sceneId: Scene['id']
+    layerId: Layer['id']
     itemId: string
     startMouseX: number
     startMouseY: number
@@ -24,7 +25,14 @@ export function useDevModeDrag(devMode: boolean) {
 
   // Called when user presses mouse down on an item
   const handleMouseDown = useCallback(
-    (e: MouseEvent<HTMLImageElement>, sceneId: string, layerId: string, itemId: string, originalX: number, originalY: number) => {
+    (
+      e: MouseEvent<HTMLImageElement>,
+      sceneId: Scene['id'],
+      layerId: Layer['id'],
+      itemId: string,
+      originalX: number,
+      originalY: number
+    ) => {
       if (!devMode) return
       e.preventDefault()
       e.stopPropagation()
@@ -50,7 +58,15 @@ export function useDevModeDrag(devMode: boolean) {
       if (!dragRef.current) return
 
       e.preventDefault()
-      const { sceneId, layerId, itemId, startMouseX, startMouseY, startItemX, startItemY } = dragRef.current
+      const {
+        sceneId,
+        layerId,
+        itemId,
+        startMouseX,
+        startMouseY,
+        startItemX,
+        startItemY
+      } = dragRef.current
       const deltaX = e.clientX - startMouseX
       const deltaY = e.clientY - startMouseY
       const newX = startItemX + deltaX
@@ -84,8 +100,8 @@ export function useDevModeDrag(devMode: boolean) {
       if (!devMode) return
       e.preventDefault()
 
-      const imageUrl = e.dataTransfer.getData('text/plain')
-      if (!imageUrl) return
+      const url = e.dataTransfer.getData('text/plain')
+      if (!url) return
 
       // Get drop coordinates relative to the container
       const rect = e.currentTarget.getBoundingClientRect()
@@ -94,10 +110,9 @@ export function useDevModeDrag(devMode: boolean) {
 
       // Add new item to the scene
       update(sceneId, 'fg', nanoid(), {
-        imageUrl,
+        url,
         x,
-        y,
-        zoomFactor: 1
+        y
       })
     },
     [devMode, update]

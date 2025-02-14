@@ -1,15 +1,14 @@
+import AssetSidebarMenu from '@/components/Sidebar/AssetSidebarMenu'
+import Overlay from '@/components/Sidebar/Overlay'
+import ScenesSubMenu from '@/components/Sidebar/ScenesSubMenu'
+import { DraggedItemType } from '@/components/Sidebar/types'
+import { Sidebar, SidebarContent, SidebarGroup, SidebarHeader, SidebarMenu } from '@/components/ui/sidebar'
 import { usePositionStore } from '@/game/hooks/positionEditsStore'
 import { useAssetStore } from '@/stores/assetStore'
 import { useKeyboardState } from '@/stores/keyboardStateStore'
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
-import { ChevronRight, Plus } from 'lucide-react'
-import { useRef, useState } from 'react'
-import Overlay from '@/components/Sidebar/Overlay'
-import ScenesSubMenu from '@/components/Sidebar/ScenesSubMenu'
-import { DraggedItemType } from '@/components/Sidebar/types'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { Sidebar, SidebarContent, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub } from '@/components/ui/sidebar'
+import { useState } from 'react'
 
 export default function AssetPalette() {
   const sensors = useSensors(
@@ -25,23 +24,10 @@ export default function AssetPalette() {
   )
 
   const { scenes, moveDialogue, takeSnapshot, restoreSnapshot, addItem, moveItem, clearSnapshot } = usePositionStore()
-
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const { assetMap, addAsset } = useAssetStore()
   const [isAssetsOpen, setIsAssetsOpen] = useState(false)
-
   const [draggedItem, setDraggedItem] = useState<DraggedItemType | null>(null)
   const { isOptionKeyPressed } = useKeyboardState()
-
-  const handleFiles = async (files: FileList | null) => {
-    if (!files) return
-
-    Array.from(files).forEach(file => {
-      const reader = new FileReader()
-      reader.onload = e => addAsset(file.name, e.target?.result as string)
-      reader.readAsDataURL(file)
-    })
-  }
+  const { uploadFiles } = useAssetStore()
 
   return (
     <DndContext
@@ -51,7 +37,6 @@ export default function AssetPalette() {
         const activeData = active.data.current as DraggedItemType
         if (!activeData) return
         takeSnapshot()
-        console.log({ active })
         setDraggedItem(activeData)
       }}
       onDragOver={({ active, over }) => {
@@ -68,8 +53,6 @@ export default function AssetPalette() {
 
           if (!activeSceneId || !overSceneId) return
 
-          const overIndex = scenes[overSceneId].dialogue.findIndex(d => d.id === overData.data.id)
-
           moveDialogue({
             from: {
               sceneId: activeSceneId,
@@ -78,15 +61,13 @@ export default function AssetPalette() {
             to: {
               sceneId: overSceneId,
               // If we found a valid index, use it, otherwise append to end
-              index: overIndex >= 0 ? overIndex : scenes[overSceneId].dialogue.length
+              index: overData.index
             }
           })
         }
       }}
       onDragEnd={({ active, over }) => {
         clearSnapshot()
-
-        console.log("state", { ...usePositionStore.getState() })
 
         if (!active?.data.current || !over) {
           setDraggedItem(null)
@@ -117,13 +98,9 @@ export default function AssetPalette() {
           }
         }
 
-
-
         setDraggedItem(null)
       }}
       onDragCancel={() => {
-        console.log('cancel')
-        console.log(usePositionStore.getState())
         restoreSnapshot()
         setDraggedItem(null)
       }}
@@ -131,7 +108,7 @@ export default function AssetPalette() {
       <Sidebar
         onDrop={e => {
           e.preventDefault()
-          handleFiles(e.dataTransfer.files)
+          uploadFiles(e.dataTransfer.files)
         }}
         onDragOver={e => {
           e.preventDefault()
@@ -145,50 +122,7 @@ export default function AssetPalette() {
         <SidebarContent>
           <SidebarHeader>You better be making something cool rn...</SidebarHeader>
           <SidebarGroup>
-            <SidebarMenu>
-              <Collapsible asChild open={isAssetsOpen} onOpenChange={setIsAssetsOpen} className="group/collapsible">
-                <SidebarMenuItem>
-                  <SidebarMenuButton>
-                    <span>🌇</span>
-                    <span>Assets</span>
-                  </SidebarMenuButton>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuAction className="left-2 bg-sidebar-accent text-sidebar-accent-foreground data-[state=open]:rotate-90" showOnHover>
-                      <ChevronRight className="h-4 w-4" />
-                    </SidebarMenuAction>
-                  </CollapsibleTrigger>
-                  <SidebarMenuAction showOnHover onClick={() => fileInputRef.current?.click()}>
-                    <Plus className="h-4 w-4" />
-                  </SidebarMenuAction>
-                  <CollapsibleContent>
-                    <SidebarMenuSub className="grid grid-cols-3 gap-2 w-full">
-                      <div className="relative group aspect-square rounded-md border bg-background hover:ring-2 ring-primary overflow-hidden cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                        <div className="absolute inset-0 p-1 flex items-center justify-center">
-                          <Plus className="w-8 h-8 text-muted-foreground group-hover:scale-105 transition-transform" />
-                        </div>
-                      </div>
-
-                      {Array.from(assetMap.entries()).map(([name, dataUrl]) => (
-                        <div
-                          key={name}
-                          className="relative group aspect-square rounded-md border bg-background cursor-grab hover:ring-2 ring-primary overflow-hidden"
-                          draggable
-                          onDragStart={e => {
-                            e.dataTransfer.setData('text/plain', dataUrl)
-                            e.dataTransfer.effectAllowed = 'copy'
-                          }}
-                        >
-                          <div className="absolute inset-0 p-1 flex items-center justify-center">
-                            <img src={dataUrl} alt={name} className="w-full h-full object-contain max-w-[80%] max-h-[80%] hover:scale-105 transition-transform" />
-                          </div>
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-xs p-1 truncate text-white backdrop-blur-sm">{name}</div>
-                        </div>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
-            </SidebarMenu>
+            <AssetSidebarMenu isAssetsOpen={isAssetsOpen} setIsAssetsOpen={setIsAssetsOpen} />
           </SidebarGroup>
           <SidebarGroup>
             <SidebarMenu>
@@ -198,7 +132,6 @@ export default function AssetPalette() {
             </SidebarMenu>
           </SidebarGroup>
         </SidebarContent>
-        <input type="file" ref={fileInputRef} className="hidden" multiple accept="image/*" onChange={e => handleFiles(e.target.files)} />
       </Sidebar>
       <Overlay draggedItem={draggedItem}></Overlay>
     </DndContext>

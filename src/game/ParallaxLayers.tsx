@@ -52,7 +52,7 @@ export default function ParallaxLayers({ segment, cameraX }: SceneSegmentProps) 
               return (
                 <ResizableImage
                   key={item.id}
-                  src={item.imageUrl}
+                  src={item.url}
                   alt={item.id}
                   x={finalX}
                   y={finalY}

@@ -21,11 +21,35 @@ type AssetActions = {
   exportSceneData: (scenes: Record<string, Scene>, forProduction?: boolean) => Record<string, Scene>
   // Get all stored data URLs for saving to a file
   getStoredAssets: () => Record<string, string>
+  uploadFiles: (files: FileList | null) => Promise<void>
 }
 
 export const useAssetStore = create<AssetState & AssetActions>()(
   immer((set, get) => ({
     assetMap: new Map(),
+
+    uploadFiles: async (files: FileList | null) => {
+      if (!files) return
+
+      const readFile = (file: File): Promise<[string, string]> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = e => resolve([file.name, e.target?.result as string])
+          reader.onerror = () => reject(new Error(`Failed to read file: ${file.name}`))
+          reader.readAsDataURL(file)
+        })
+      }
+
+      const fileResults = await Promise.all(
+        Array.from(files).map(readFile)
+      )
+
+      set(state => {
+        fileResults.forEach(([name, dataUrl]) => {
+          state.assetMap.set(name, dataUrl)
+        })
+      })
+    },
 
     addAsset: (originalUrl: string, dataUrl: string) =>
       set(state => {

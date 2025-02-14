@@ -1,24 +1,28 @@
-export type LayerItem = {
+export interface ImageAsset {
   id: string
-  imageUrl: string
+  name: string
+  url: string
   x: number
   y: number
   zoomFactor?: number
 }
-type LayerId = 'bg' | 'mid' | 'fg'
-export type Layer = {
-  id: LayerId
-  parallaxFactor?: number
-  items: LayerItem[]
-}
 
+export const LAYERS = ['bg', 'mid', 'fg'] as const
+export type LayerId = (typeof LAYERS)[number]
+
+export interface Layer {
+  id: LayerId
+  name?: string
+  items: ImageAsset[]
+  parallaxFactor?: number
+}
 export type Choice = {
   id: string
   label: string
   nextSceneId: string
 }
 
-export type DialogueItem = {
+export type Dialogue = {
   id: string
   speaker: string
   text: string
@@ -27,8 +31,9 @@ export type DialogueItem = {
 export type Scene = {
   id: string
   width: number
+  name: string
   layers: Layer[]
-  dialogue: DialogueItem[]
+  dialogue: Dialogue[]
   choices?: Choice[]
 }
 

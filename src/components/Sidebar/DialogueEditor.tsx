@@ -1,11 +1,11 @@
-import { usePositionStore } from "@/game/hooks/positionEditsStore"
-import { DialogueItem, Scene } from "@/game/types"
-import { X } from "lucide-react"
-import { useCallback, useRef, useState, KeyboardEvent } from "react"
+import { usePositionStore } from '@/game/hooks/positionEditsStore'
+import { Dialogue, Scene } from '@/game/types'
+import { X } from 'lucide-react'
+import { useCallback, useRef, useState, KeyboardEvent } from 'react'
 
 interface DialogueEditorProps {
   initialText: string
-  dialogueId: DialogueItem['id']
+  dialogueId: Dialogue['id']
   sceneId: Scene['id']
   defaultIsEditing?: boolean
   onCancel?: () => void
@@ -41,7 +41,6 @@ export default function DialogueEditor({ initialText, dialogueId, sceneId, defau
       // Use RAF to ensure the text is reset before closing
       requestAnimationFrame(() => {
         setIsEditing(false)
-        console.log('cancel')
         onCancel?.()
       })
     },
