@@ -1,6 +1,8 @@
-import { Scene, SpriteConfig, Layer } from '@/game/types'
+import { Layer, Scene, SpriteConfig } from '@/game/types'
+import { nanoid } from 'nanoid'
 
-const canyonRockPath = '/assets/craftpix-net-675652-free-rocks-pixel-art-asset-pack/canyon_rocks/canyon_rock1.png'
+const canyonRockPath =
+  '/assets/craftpix-net-675652-free-rocks-pixel-art-asset-pack/canyon_rocks/canyon_rock1.png'
 
 const DEFAULT_LAYERS = ['bg', 'mid', 'fg'] as const
 
@@ -11,7 +13,7 @@ const getDefaultLayer = (id: (typeof DEFAULT_LAYERS)[number]): Layer => ({
   items: []
 })
 
-const applyDefaults = (scene: Scene): Scene => {
+export const applyDefaults = (scene: Partial<Scene>): Scene => {
   // Ensure all required layers exist with defaults
   const existingLayers = new Set(scene.layers?.map(l => l.id))
   const defaultedLayers = [...(scene.layers || [])]
@@ -31,10 +33,12 @@ const applyDefaults = (scene: Scene): Scene => {
 
   return {
     ...scene,
+    id: scene.id || nanoid(),
     name: scene.name || `Scene ${scene.id}`, // Default name if missing
     layers: defaultedLayers,
     dialogue: scene.dialogue || [],
-    choices: scene.choices || []
+    choices: scene.choices || [],
+    width: scene.width || 2000
   }
 }
 
@@ -47,18 +51,34 @@ const rawScenes: Record<string, Scene> = {
       {
         id: 'bg',
         parallaxFactor: 0.5,
-        items: [{ id: 'bg1', url: canyonRockPath, name: 'Canyon Rock', x: 300, y: 400 }]
+        items: [
+          { id: 'bg1', url: canyonRockPath, name: 'Canyon Rock', x: 300, y: 400 }
+        ]
       },
       {
         id: 'mid',
         parallaxFactor: 0.8,
-        items: [{ id: 'treeCluster2', url: '/assets/trees_mid.png', name: 'Tree Cluster Mid', x: 800, y: 50 }]
+        items: [
+          {
+            id: 'treeCluster2',
+            url: '/assets/trees_mid.png',
+            name: 'Tree Cluster Mid',
+            x: 800,
+            y: 50
+          }
+        ]
       },
       {
         id: 'fg',
         parallaxFactor: 1.2,
         items: [
-          { id: 'fg1', url: '/assets/trees_fg.png', name: 'Trees Foreground', x: 0, y: 0 },
+          {
+            id: 'fg1',
+            url: '/assets/trees_fg.png',
+            name: 'Trees Foreground',
+            x: 0,
+            y: 0
+          },
           { id: 'rock', url: '/assets/rock.png', name: 'Rock', x: 400, y: 200 }
         ]
       }

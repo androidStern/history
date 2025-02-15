@@ -1,9 +1,8 @@
-import { create } from 'zustand'
-import { produce } from 'immer'
-import { createContext, useContext } from 'react'
+import { applyDefaults, loadGameData } from '@/game/gameData'
 import { Dialogue, ImageAsset, Scene } from '@/game/types'
-import { loadGameData } from '@/game/gameData'
 import { nanoid } from 'nanoid'
+import { createContext, useContext } from 'react'
+import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 
 export const ITEM_TYPES = ['dialogue', 'image'] as const
@@ -22,6 +21,7 @@ type GameState = {
   snapshot: Record<string, Scene> | null
 }
 type GameActions = {
+  addScene: (name: string) => void
   moveItem: (
     itemType: ItemType,
     sourceSceneId: string,
@@ -76,6 +76,15 @@ export const useGameStore = create<GameState & GameActions>()(
   immer((set, get) => ({
     scenes: loadGameData(),
     snapshot: null,
+    addScene: (name: string) => {
+      set(state => {
+        const newSceneId = nanoid()
+        state.scenes[newSceneId] = applyDefaults({
+          id: newSceneId,
+          name,
+        })
+      })
+    },
     update: (sceneId, layerId, itemId, newItem) => {
       set(state => {
         const layer = state.scenes[sceneId]?.layers.find(l => l.id === layerId)
@@ -89,7 +98,7 @@ export const useGameStore = create<GameState & GameActions>()(
           // Add new item
           layer.items.push({
             name: newItem.name || '',
-            id: newItem.id,
+            id: newItem.id || nanoid(),
             x: newItem.x ?? 0,
             y: newItem.y ?? 0,
             zoomFactor: newItem.zoomFactor ?? 1,
