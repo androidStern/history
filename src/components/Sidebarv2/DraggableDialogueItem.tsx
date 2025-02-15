@@ -1,6 +1,8 @@
 'use client'
 
 import { useDraggableItemContext, useGameStore } from '@/stores/useGameStore'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -26,23 +28,38 @@ import {
   User,
   X
 } from 'lucide-react'
-import React, { useEffect } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import React from 'react'
+import { useForm } from 'react-hook-form'
 
 interface DraggableDialogueItemProps extends React.HTMLAttributes<HTMLDivElement> {
   itemId: Dialogue['id']
   sceneId: Scene['id']
   content: string
   speaker?: string
+  initialIsEditing?: boolean
+  onCancel?: () => void
+  onSubmit?: () => void
 }
 
 export const DraggableDialogueItem: React.FC<DraggableDialogueItemProps> =
   React.forwardRef<HTMLDivElement, DraggableDialogueItemProps>(
-    ({ itemId, sceneId, content, speaker = 'Unknown', ...props }, ref) => {
-      const updateDialogueText = useGameStore(state => state.updateDialogueText)
+    (
+      {
+        itemId,
+        sceneId,
+        content,
+        speaker = 'Unknown',
+        initialIsEditing = false,
+        onCancel,
+        onSubmit,
+        ...props
+      },
+      ref
+    ) => {
+      const upsertDialogueText = useGameStore(state => state.upsertDialogue)
       const changeSpeaker = useGameStore(state => state.changeSpeaker)
 
-      const [isEditing, setIsEditing] = React.useState(false)
+      const [isEditing, setIsEditing] = React.useState(initialIsEditing)
       const { isDragging, isOver, setCanDrag } = useDraggableItemContext()
 
       // Focus the textarea when starting to edit
@@ -62,8 +79,15 @@ export const DraggableDialogueItem: React.FC<DraggableDialogueItemProps> =
         }
       }
       const handleSubmit = (values: { speaker: string; content: string }) => {
-        updateDialogueText(sceneId, itemId, values.content)
-        changeSpeaker(sceneId, itemId, values.speaker)
+        if (values.speaker.trim() === '') return
+        if (values.content.trim() === '') return
+        upsertDialogueText(
+          sceneId,
+          itemId,
+          values.content.trim(),
+          values.speaker.trim()
+        )
+        onSubmit?.()
         setIsEditing(false)
       }
 
@@ -92,7 +116,10 @@ export const DraggableDialogueItem: React.FC<DraggableDialogueItemProps> =
                 <InlineDialogueForm
                   initialSpeaker={speaker}
                   initialContent={content}
-                  onCancel={() => setIsEditing(false)}
+                  onCancel={() => {
+                    setIsEditing(false)
+                    onCancel?.()
+                  }}
                   onSubmit={handleSubmit}
                 />
               </motion.div>
@@ -147,22 +174,15 @@ export function InlineDialogueForm({
 }: InlineDialogueFormProps) {
   const { getAllSpeakers } = useGameStore()
 
-  const formRef = React.useRef<HTMLFormElement>(null)
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (formRef.current && !formRef.current.contains(e.target as Node)) {
-        onCancel()
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [onCancel])
-
   const speakers = getAllSpeakers()
 
-  const form = useForm({
+  const formSchema = z.object({
+    speaker: z.string().min(1, 'Speaker is required'),
+    content: z.string().min(1, 'Content is required')
+  })
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       speaker: initialSpeaker,
       content: initialContent
@@ -183,13 +203,12 @@ export function InlineDialogueForm({
   return (
     <Form {...form}>
       <form
-        ref={formRef}
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-3"
         onKeyDown={handleKeyDown}
       >
         <div className="relative flex-1">
-          <Controller
+          <FormField
             control={form.control}
             name="speaker"
             render={({ field: { value, onChange } }) => (
@@ -261,7 +280,6 @@ interface SpeakerAutocompleteProps {
   value: string
   onChange: (value: string) => void
   speakers: string[]
-  onCreateSpeaker?: (name: string) => void
 }
 
 export const SpeakerAutocomplete: React.FC<SpeakerAutocompleteProps> = ({

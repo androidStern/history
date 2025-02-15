@@ -4,6 +4,7 @@ import { createContext, useContext } from 'react'
 import { Dialogue, ImageAsset, Scene } from '@/game/types'
 import { loadGameData } from '@/game/gameData'
 import { nanoid } from 'nanoid'
+import { immer } from 'zustand/middleware/immer'
 
 export const ITEM_TYPES = ['dialogue', 'image'] as const
 export type ItemType = (typeof ITEM_TYPES)[number]
@@ -16,9 +17,11 @@ export interface DraggedItem {
   index: number
 }
 
-interface GameState {
+type GameState = {
   scenes: Record<string, Scene>
-  snapshot: Scene[] | null
+  snapshot: Record<string, Scene> | null
+}
+type GameActions = {
   moveItem: (
     itemType: ItemType,
     sourceSceneId: string,
@@ -56,6 +59,12 @@ interface GameState {
     }
   ) => void
   updateDialogueText: (sceneId: string, dialogueId: string, newText: string) => void
+  upsertDialogue: (
+    sceneId: string,
+    dialogueId: string,
+    newText: string,
+    speaker: string
+  ) => void
   changeSpeaker: (sceneId: string, dialogueId: string, newSpeaker: string) => void
   addDialogue: (sceneId: string, dialogueItem: Partial<Dialogue>) => Dialogue
   getAllSpeakers: () => string[]
@@ -63,12 +72,12 @@ interface GameState {
   restoreSnapshot: () => void
 }
 
-export const useGameStore = create<GameState>((set, get) => ({
-  scenes: loadGameData(),
-  snapshot: null,
-  update: (sceneId, layerId, itemId, newItem) => {
-    set(
-      produce(state => {
+export const useGameStore = create<GameState & GameActions>()(
+  immer((set, get) => ({
+    scenes: loadGameData(),
+    snapshot: null,
+    update: (sceneId, layerId, itemId, newItem) => {
+      set(state => {
         const layer = state.scenes[sceneId]?.layers.find(l => l.id === layerId)
         if (!layer) return
 
@@ -88,19 +97,17 @@ export const useGameStore = create<GameState>((set, get) => ({
           })
         }
       })
-    )
-  },
-  moveItem: (
-    itemType,
-    sourceSceneId,
-    targetSceneId,
-    itemId,
-    newIndex,
-    sourceLayerId,
-    targetLayerId
-  ) =>
-    set(
-      produce(state => {
+    },
+    moveItem: (
+      itemType,
+      sourceSceneId,
+      targetSceneId,
+      itemId,
+      newIndex,
+      sourceLayerId,
+      targetLayerId
+    ) =>
+      set(state => {
         const sourceScene = state.scenes[sourceSceneId]
         const targetScene = state.scenes[targetSceneId]
         if (!sourceScene || !targetScene) {
@@ -135,11 +142,9 @@ export const useGameStore = create<GameState>((set, get) => ({
             targetLayer.items.splice(newIndex, 0, item)
           }
         }
-      })
-    ),
-  addImage: (sceneId: string, layerId: string, newItem: Partial<ImageAsset>) => {
-    set(
-      produce(state => {
+      }),
+    addImage: (sceneId: string, layerId: string, newItem: Partial<ImageAsset>) => {
+      set(state => {
         if (!newItem.url) return
 
         const scene = state.scenes[sceneId]
@@ -158,11 +163,9 @@ export const useGameStore = create<GameState>((set, get) => ({
 
         layer.items.push(completeItem)
       })
-    )
-  },
-  deleteItem: (itemType, sceneId, itemId, layerId) =>
-    set(
-      produce(state => {
+    },
+    deleteItem: (itemType, sceneId, itemId, layerId) =>
+      set(state => {
         const scene = state.scenes[sceneId]
         if (!scene) {
           return state
@@ -177,11 +180,9 @@ export const useGameStore = create<GameState>((set, get) => ({
           }
           layer.items = layer.items.filter(i => i.id !== itemId)
         }
-      })
-    ),
-  reorderItem: (itemType, sceneId, oldIndex, newIndex, layerId) =>
-    set(
-      produce(state => {
+      }),
+    reorderItem: (itemType, sceneId, oldIndex, newIndex, layerId) =>
+      set(state => {
         const scene = state.scenes[sceneId]
         if (!scene) {
           return state
@@ -198,11 +199,9 @@ export const useGameStore = create<GameState>((set, get) => ({
           const [item] = layer.items.splice(oldIndex, 1)
           layer.items.splice(newIndex, 0, item)
         }
-      })
-    ),
-  updateDialogueText: (sceneId, dialogueId, newText) =>
-    set(
-      produce(state => {
+      }),
+    updateDialogueText: (sceneId, dialogueId, newText) =>
+      set(state => {
         const scene = state.scenes[sceneId]
         if (scene) {
           const dialogueItem = scene.dialogue.find(d => d.id === dialogueId)
@@ -210,11 +209,22 @@ export const useGameStore = create<GameState>((set, get) => ({
             dialogueItem.text = newText
           }
         }
-      })
-    ),
-  changeSpeaker: (sceneId, dialogueId, newSpeaker) =>
-    set(
-      produce(state => {
+      }),
+    upsertDialogue: (sceneId, dialogueId, newText, speaker) =>
+      set(state => {
+        const scene = state.scenes[sceneId]
+        if (!scene) return
+
+        const dialogueItem = scene.dialogue.find(d => d.id === dialogueId)
+        if (dialogueItem) {
+          dialogueItem.text = newText
+          dialogueItem.speaker = speaker
+        } else {
+          scene.dialogue.push({ id: dialogueId, text: newText, speaker })
+        }
+      }),
+    changeSpeaker: (sceneId, dialogueId, newSpeaker) =>
+      set(state => {
         const scene = state.scenes[sceneId]
         if (scene) {
           const dialogueItem = scene.dialogue.find(d => d.id === dialogueId)
@@ -222,51 +232,45 @@ export const useGameStore = create<GameState>((set, get) => ({
             dialogueItem.speaker = newSpeaker
           }
         }
-      })
-    ),
-  addDialogue: (sceneId: string, dialogueItem: Partial<Dialogue>) => {
-    const completeDialogueItem: Dialogue = {
-      id: nanoid(),
-      text: dialogueItem.text ?? '',
-      speaker: dialogueItem.speaker ?? ''
-    }
+      }),
+    addDialogue: (sceneId: string, dialogueItem: Partial<Dialogue>) => {
+      const completeDialogueItem: Dialogue = {
+        id: nanoid(),
+        text: dialogueItem.text ?? '',
+        speaker: dialogueItem.speaker ?? ''
+      }
 
-    set(
-      produce(state => {
+      set(state => {
         const scene = state.scenes[sceneId]
         if (!scene) return
         scene.dialogue.push(completeDialogueItem)
       })
-    )
 
-    return completeDialogueItem // @TODO: handle failure cases like not finding a scene
-  },
-  getAllSpeakers: () => {
-    return Array.from(
-      new Set(
-        Object.values(get().scenes)
-          .flatMap(scene => scene.dialogue)
-          .map(dialogue => dialogue.speaker)
-          .filter(Boolean)
+      return completeDialogueItem // @TODO: handle failure cases like not finding a scene
+    },
+    getAllSpeakers: () => {
+      return Array.from(
+        new Set(
+          Object.values(get().scenes)
+            .flatMap(scene => scene.dialogue)
+            .map(dialogue => dialogue.speaker)
+            .filter(Boolean)
+        )
       )
-    )
-  },
-  createSnapshot: () =>
-    set(
-      produce(state => {
+    },
+    createSnapshot: () =>
+      set(state => {
         state.snapshot = JSON.parse(JSON.stringify(state.scenes))
-      })
-    ),
-  restoreSnapshot: () =>
-    set(
-      produce(state => {
+      }),
+    restoreSnapshot: () =>
+      set(state => {
         if (state.snapshot) {
           state.scenes = state.snapshot
           state.snapshot = null
         }
       })
-    )
-}))
+  }))
+)
 
 /**
  * The context: child can read isDragging, canDrag, etc.
