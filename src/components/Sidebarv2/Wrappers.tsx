@@ -1,9 +1,7 @@
-import { Layer, Scene } from '@/game/types'
+import { DraggedItem, ItemType, Layer, Scene } from '@/game/types'
 import {
   DraggableItemContext,
-  DraggedItem,
   DroppableItemContext,
-  ItemType,
   useGameStore
 } from '@/stores/useGameStore'
 import { Root } from '@radix-ui/react-slot'

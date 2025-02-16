@@ -1,11 +1,19 @@
 'use client'
 
+import AssetSidebarMenu from '@/components/Sidebarv2/AssetSidebarMenu'
 import { DraggableDialogueItem } from '@/components/Sidebarv2/DraggableDialogueItem'
 import { DraggableImageItem } from '@/components/Sidebarv2/DraggableImageItem'
+import Footer from '@/components/Sidebarv2/Footer'
 import {
   DnDDroppableWrapper,
   DnDItemWrapper
 } from '@/components/Sidebarv2/Wrappers'
+import { Button } from '@/components/ui/button'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger
+} from '@/components/ui/collapsible'
 import {
   Command,
   CommandEmpty,
@@ -15,27 +23,10 @@ import {
   CommandList
 } from '@/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupAction,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuAction,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem
-} from '@/components/ui/sidebar'
-import { useGameStore } from '@/stores/useGameStore'
-import AssetSidebarMenu from '@/components/Sidebar/AssetSidebarMenu'
-import { Button } from '@/components/ui/button'
+import * as SB from '@/components/ui/sidebar'
 import { Dialogue, Scene } from '@/game/types'
 import { cn } from '@/lib/utils'
-import { useAssetStore } from '@/stores/assetStore'
+import { useGameStore } from '@/stores/useGameStore'
 import {
   Check,
   ChevronDown,
@@ -54,16 +45,11 @@ import { useCallback, useRef, useState } from 'react'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { useDebouncedCallback } from 'use-debounce'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger
-} from '@/components/ui/collapsible'
 
 const DEBOUNCE_TIME = 200
 
 export const GameEditorSidebar: React.FC = () => {
-  const { uploadFiles } = useAssetStore()
+  const { uploadFiles } = useGameStore()
   const scenes = useGameStore(state => state.scenes)
   const addScene = useGameStore(state => state.addScene)
   const deleteChoice = useGameStore(state => state.deleteChoice)
@@ -139,7 +125,7 @@ export const GameEditorSidebar: React.FC = () => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <Sidebar
+      <SB.Sidebar
         onDrop={e => {
           if (e.dataTransfer.types.includes('Files')) {
             e.preventDefault()
@@ -159,18 +145,18 @@ export const GameEditorSidebar: React.FC = () => {
           }
         }}
       >
-        <SidebarContent>
-          <SidebarGroup>
+        <SB.SidebarContent>
+          <SB.SidebarGroup>
             <AssetSidebarMenu
               isAssetsOpen={isAssetsOpen}
               setIsAssetsOpen={setIsAssetsOpen}
             />
-          </SidebarGroup>
-          <SidebarGroup>
-            <SidebarGroupLabel>
-              <SidebarMenuButton>Scenes</SidebarMenuButton>
-            </SidebarGroupLabel>
-            <SidebarGroupAction
+          </SB.SidebarGroup>
+          <SB.SidebarGroup>
+            <SB.SidebarGroupLabel>
+              <SB.SidebarMenuButton>Scenes</SB.SidebarMenuButton>
+            </SB.SidebarGroupLabel>
+            <SB.SidebarGroupAction
               onClick={() =>
                 setDraftScene({
                   id: nanoid(),
@@ -183,11 +169,11 @@ export const GameEditorSidebar: React.FC = () => {
               title="Add Scene"
             >
               <Plus /> <span className="sr-only">Add Scene</span>
-            </SidebarGroupAction>
+            </SB.SidebarGroupAction>
 
             {draftScene && (
-              <SidebarGroup key={draftScene.id}>
-                <SidebarGroupLabel asChild>
+              <SB.SidebarGroup key={draftScene.id}>
+                <SB.SidebarGroupLabel asChild>
                   <input
                     type="text"
                     value={draftScene.name}
@@ -209,14 +195,14 @@ export const GameEditorSidebar: React.FC = () => {
                     className="bg-transparent outline-none w-full"
                     autoFocus
                   />
-                </SidebarGroupLabel>
-              </SidebarGroup>
+                </SB.SidebarGroupLabel>
+              </SB.SidebarGroup>
             )}
             {Object.values(scenes).map(scene => (
-              <SidebarGroup key={scene.id}>
-                <SidebarGroupLabel>{scene.name}</SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>
+              <SB.SidebarGroup key={scene.id}>
+                <SB.SidebarGroupLabel>{scene.name}</SB.SidebarGroupLabel>
+                <SB.SidebarGroupContent>
+                  <SB.SidebarMenu>
                     <DnDDroppableWrapper
                       onDrop={() => onDrop(`${scene.id}-dialogue`)}
                       onDragEnter={() => handleDragEnter(`${scene.id}-dialogue`)}
@@ -226,8 +212,8 @@ export const GameEditorSidebar: React.FC = () => {
                       sceneId={scene.id}
                       isSameCollection={item => item.sceneId === scene.id}
                     >
-                      <SidebarMenuItem>
-                        <SidebarMenuButton
+                      <SB.SidebarMenuItem>
+                        <SB.SidebarMenuButton
                           onClick={() => toggleSection(scene.id, 'dialogue')}
                           className="w-full justify-between group/dialogue"
                         >
@@ -243,9 +229,9 @@ export const GameEditorSidebar: React.FC = () => {
                                 'opacity-100 !rotate-0'
                             )}
                           />
-                        </SidebarMenuButton>
+                        </SB.SidebarMenuButton>
                         {isOpen(scene.id, 'dialogue') && (
-                          <SidebarGroupContent className="pl-4 relative group/addDialogue">
+                          <SB.SidebarGroupContent className="pl-4 relative group/addDialogue">
                             {scene.dialogue.length === 0 && (
                               <div className="text-sm text-muted-foreground p-2">
                                 Add items here
@@ -319,9 +305,9 @@ export const GameEditorSidebar: React.FC = () => {
                                 </DnDItemWrapper>
                               )}
                             {/* add "new dialogue" button. */}
-                          </SidebarGroupContent>
+                          </SB.SidebarGroupContent>
                         )}
-                      </SidebarMenuItem>
+                      </SB.SidebarMenuItem>
                     </DnDDroppableWrapper>
                     <DnDDroppableWrapper
                       onDrop={() => onDrop(`${scene.id}-imageAssets`)}
@@ -332,8 +318,8 @@ export const GameEditorSidebar: React.FC = () => {
                       sceneId={scene.id}
                       isSameCollection={item => item.sceneId === scene.id}
                     >
-                      <SidebarMenuItem>
-                        <SidebarMenuSubButton
+                      <SB.SidebarMenuItem>
+                        <SB.SidebarMenuSubButton
                           onClick={() => toggleSection(scene.id, 'imageAssets')}
                           className="flex justify-between items-center w-full group/imageAssets"
                         >
@@ -349,9 +335,9 @@ export const GameEditorSidebar: React.FC = () => {
                                 'opacity-100 !rotate-0'
                             )}
                           />
-                        </SidebarMenuSubButton>
+                        </SB.SidebarMenuSubButton>
                         {isOpen(scene.id, 'imageAssets') && (
-                          <SidebarMenuSub className="pl-4">
+                          <SB.SidebarMenuSub className="pl-4">
                             {scene.layers.length === 0 && (
                               <div className="text-sm text-muted-foreground p-2">
                                 Add items here
@@ -377,8 +363,8 @@ export const GameEditorSidebar: React.FC = () => {
                                   item.layerId === layer.id
                                 }
                               >
-                                <SidebarMenuSubItem>
-                                  <SidebarMenuSubButton
+                                <SB.SidebarMenuSubItem>
+                                  <SB.SidebarMenuSubButton
                                     onClick={() =>
                                       toggleSection(scene.id, `layer-${layer.id}`)
                                     }
@@ -398,9 +384,9 @@ export const GameEditorSidebar: React.FC = () => {
                                           : 'opacity-0 rotate-[-90deg] group-hover/imagelayer:opacity-100'
                                       )}
                                     />
-                                  </SidebarMenuSubButton>
+                                  </SB.SidebarMenuSubButton>
                                   {isOpen(scene.id, `layer-${layer.id}`) && (
-                                    <SidebarMenuSub>
+                                    <SB.SidebarMenuSub>
                                       {layer.items.length === 0 && (
                                         <div className="text-sm text-muted-foreground p-2">
                                           Drop images here
@@ -428,19 +414,19 @@ export const GameEditorSidebar: React.FC = () => {
                                           />
                                         </DnDItemWrapper>
                                       ))}
-                                    </SidebarMenuSub>
+                                    </SB.SidebarMenuSub>
                                   )}
-                                </SidebarMenuSubItem>
+                                </SB.SidebarMenuSubItem>
                               </DnDDroppableWrapper>
                             ))}
-                          </SidebarMenuSub>
+                          </SB.SidebarMenuSub>
                         )}
-                      </SidebarMenuItem>
+                      </SB.SidebarMenuItem>
                     </DnDDroppableWrapper>
                     <Collapsible className="group/collapsible">
-                      <SidebarMenuItem>
+                      <SB.SidebarMenuItem>
                         <CollapsibleTrigger asChild>
-                          <SidebarMenuButton className="group/choices w-full !pr-2">
+                          <SB.SidebarMenuButton className="group/choices w-full !pr-2">
                             <div className="flex items-center w-full">
                               <div className="flex items-center gap-2">
                                 <GitBranch className="size-4 text-muted-foreground" />
@@ -454,16 +440,16 @@ export const GameEditorSidebar: React.FC = () => {
                                 )}
                               />
                             </div>
-                          </SidebarMenuButton>
+                          </SB.SidebarMenuButton>
                         </CollapsibleTrigger>
                         <CollapsibleContent>
-                          <SidebarMenuSub>
-                            <SidebarMenuSubItem>
+                          <SB.SidebarMenuSub>
+                            <SB.SidebarMenuSubItem>
                               <SceneChoicePicker sceneId={scene.id} />
-                            </SidebarMenuSubItem>
+                            </SB.SidebarMenuSubItem>
                             {scene.choices?.map(choice => (
-                              <SidebarMenuSubItem key={choice.id}>
-                                <SidebarMenuSubButton
+                              <SB.SidebarMenuSubItem key={choice.id}>
+                                <SB.SidebarMenuSubButton
                                   className={cn(
                                     !scenes[choice.nextSceneId] &&
                                       'border-red-400 bg-red-400'
@@ -477,28 +463,29 @@ export const GameEditorSidebar: React.FC = () => {
                                   ) : (
                                     <span>{choice.nextSceneId}</span>
                                   )}
-                                </SidebarMenuSubButton>
-                                <SidebarMenuAction
+                                </SB.SidebarMenuSubButton>
+                                <SB.SidebarMenuAction
                                   asChild
                                   onClick={() => {
                                     deleteChoice(scene.id, choice.id)
                                   }}
                                 >
                                   <Trash2 className="size-3" />
-                                </SidebarMenuAction>
-                              </SidebarMenuSubItem>
+                                </SB.SidebarMenuAction>
+                              </SB.SidebarMenuSubItem>
                             ))}
-                          </SidebarMenuSub>
+                          </SB.SidebarMenuSub>
                         </CollapsibleContent>
-                      </SidebarMenuItem>
+                      </SB.SidebarMenuItem>
                     </Collapsible>
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
+                  </SB.SidebarMenu>
+                </SB.SidebarGroupContent>
+              </SB.SidebarGroup>
             ))}
-          </SidebarGroup>
-        </SidebarContent>
-      </Sidebar>
+          </SB.SidebarGroup>
+        </SB.SidebarContent>
+        <Footer />
+      </SB.Sidebar>
     </DndProvider>
   )
 }

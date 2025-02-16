@@ -6,6 +6,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { useSidebarStore } from '@/stores/sidebarStore'
 import React from 'react'
 import { GameEditorSidebar } from '@/components/Sidebarv2/GameEditorSidebar'
+import { Toaster } from '@/components/ui/sonner'
 
 function App() {
   const { isOpen, setIsOpen } = useSidebarStore()
@@ -18,6 +19,7 @@ function App() {
         <main className="w-full h-screen flex-1 flex items-center justify-center">
           <WorldView />
           <PrintConfig />
+          <Toaster />
         </main>
       </SidebarProvider>
     </ErrorBoundary>
@@ -36,7 +38,10 @@ interface ErrorBoundaryState {
   errorInfo: React.ErrorInfo | null
 }
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class ErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props)
     this.state = {
@@ -65,8 +70,16 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       return (
         <div role="alert">
           <p className="text-red">Something went wrong:</p>
-          {this.state.error?.stack && <pre style={{ textAlign: 'left', color: 'red' }}>{this.state.error.stack}</pre>}
-          {this.state.errorInfo?.componentStack && <pre style={{ textAlign: 'left', color: 'red' }}>{this.state.errorInfo.componentStack}</pre>}
+          {this.state.error?.stack && (
+            <pre style={{ textAlign: 'left', color: 'red' }}>
+              {this.state.error.stack}
+            </pre>
+          )}
+          {this.state.errorInfo?.componentStack && (
+            <pre style={{ textAlign: 'left', color: 'red' }}>
+              {this.state.errorInfo.componentStack}
+            </pre>
+          )}
         </div>
       )
     }

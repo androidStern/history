@@ -1,5 +1,6 @@
-import { Layer, Scene, SpriteConfig } from '@/game/types'
+import { Layer, Scene, sceneSchema, SpriteConfig } from '@/game/types'
 import { nanoid } from 'nanoid'
+import { z } from 'zod'
 
 const canyonRockPath =
   '/assets/craftpix-net-675652-free-rocks-pixel-art-asset-pack/canyon_rocks/canyon_rock1.png'
@@ -158,15 +159,35 @@ const rawScenes: Record<string, Scene> = {
   }
 }
 
-export const loadGameData = (): Record<string, Scene> => {
+export type GameData = {
+  scenes: Record<string, Scene>
+  heroConfig?: SpriteConfig
+  name: string
+  assetMap?: Map<string, string>
+}
+
+export const loadGameData = (): GameData => {
   const processedScenes: Record<string, Scene> = {}
 
   for (const [sceneId, scene] of Object.entries(rawScenes)) {
     processedScenes[sceneId] = applyDefaults(scene)
   }
 
-  return processedScenes
+  return {
+    scenes: processedScenes,
+    heroConfig,
+    name: 'History'
+  }
 }
+
+export const gameConfigSchema = z.object({
+  scenes: z.record(z.string(), sceneSchema),
+  heroConfig: z.object({}).passthrough().optional(),
+  name: z.string(),
+  assetMap: z.record(z.string(), z.string())
+})
+
+export type GameConfig = z.infer<typeof gameConfigSchema>
 
 const frameRate = 20
 export const heroConfig: SpriteConfig = {

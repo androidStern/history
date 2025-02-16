@@ -116,7 +116,7 @@ export default tseslint.config(
             },
             {
               from: ['store'],
-              allow: ['game']
+              allow: ['game', 'store']
             },
             // Game logic can import from lib and components
             {

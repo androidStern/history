@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
-import { usePositionStore } from '@/game/hooks/positionEditsStore'
 import { Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useGameStore } from '@/stores/useGameStore'
 
 export default function PrintConfig() {
-  const { scenes } = usePositionStore()
+  const { scenes } = useGameStore(state => state.scenes)
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
@@ -38,7 +38,11 @@ export default function PrintConfig() {
   }
 
   return (
-    <div className={`fixed top-4 right-4 transition-opacity duration-200 z-50 ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+    <div
+      className={`fixed top-4 right-4 transition-opacity duration-200 z-50 ${
+        isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}
+    >
       <Button onClick={handleExport} variant="default" size="default">
         <Download />
         Export Positions

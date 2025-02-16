@@ -9,13 +9,13 @@ interface SidebarState {
 
 export const useSidebarStore = create<SidebarState>()(
   persist(
-    (set) => ({
+    set => ({
       isOpen: true, // default state
-      setIsOpen: (open) => set({ isOpen: open }),
-      toggle: () => set((state) => ({ isOpen: !state.isOpen })),
+      setIsOpen: open => set({ isOpen: open }),
+      toggle: () => set(state => ({ isOpen: !state.isOpen }))
     }),
     {
-      name: 'sidebar-storage', // unique name for localStorage
+      name: 'sidebar-storage' // unique name for localStorage
     }
   )
 )

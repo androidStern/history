@@ -1,13 +1,5 @@
 'use client'
 
-import React from 'react'
-import { MoreHorizontal, Copy, ExternalLink, Trash2 } from 'lucide-react'
-import {
-  SidebarMenuAction,
-  SidebarMenuButton,
-  SidebarMenuItem
-} from '@/components/ui/sidebar'
-import { cn } from '@/lib/utils'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,8 +8,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { useGameStore, useDraggableItemContext } from '@/stores/useGameStore'
+import {
+  SidebarMenuAction,
+  SidebarMenuButton,
+  SidebarMenuItem
+} from '@/components/ui/sidebar'
 import { ImageAsset, Layer, Scene } from '@/game/types'
+import { cn } from '@/lib/utils'
+import { useDraggableItemContext, useGameStore } from '@/stores/useGameStore'
+import { Copy, ExternalLink, MoreHorizontal, Trash2 } from 'lucide-react'
+import React from 'react'
 
 interface DraggableImageItemProps extends React.HTMLAttributes<HTMLLIElement> {
   itemId: ImageAsset['id']
