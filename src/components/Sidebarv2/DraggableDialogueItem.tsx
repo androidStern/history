@@ -57,7 +57,6 @@ export const DraggableDialogueItem: React.FC<DraggableDialogueItemProps> =
       ref
     ) => {
       const upsertDialogueText = useGameStore(state => state.upsertDialogue)
-      const changeSpeaker = useGameStore(state => state.changeSpeaker)
 
       const [isEditing, setIsEditing] = React.useState(initialIsEditing)
       const { isDragging, isOver, setCanDrag } = useDraggableItemContext()

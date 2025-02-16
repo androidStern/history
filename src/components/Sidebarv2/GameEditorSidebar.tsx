@@ -2,11 +2,19 @@
 
 import { DraggableDialogueItem } from '@/components/Sidebarv2/DraggableDialogueItem'
 import { DraggableImageItem } from '@/components/Sidebarv2/DraggableImageItem'
-import { useGameStore } from '@/stores/useGameStore'
 import {
   DnDDroppableWrapper,
   DnDItemWrapper
 } from '@/components/Sidebarv2/Wrappers'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList
+} from '@/components/ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Sidebar,
   SidebarContent,
@@ -15,24 +23,42 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem
 } from '@/components/ui/sidebar'
+import { useGameStore } from '@/stores/useGameStore'
+import AssetSidebarMenu from '@/components/Sidebar/AssetSidebarMenu'
+import { Button } from '@/components/ui/button'
+import { Dialogue, Scene } from '@/game/types'
 import { cn } from '@/lib/utils'
-import { ChevronDown, Image, Layers, MessageSquare, Plus } from 'lucide-react'
+import { useAssetStore } from '@/stores/assetStore'
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  ChevronsUpDown,
+  GitBranch,
+  Image,
+  Layers,
+  MessageSquare,
+  Plus,
+  Trash2
+} from 'lucide-react'
+import { nanoid } from 'nanoid'
 import type React from 'react'
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { useDebouncedCallback } from 'use-debounce'
-import AssetSidebarMenu from '@/components/Sidebar/AssetSidebarMenu'
-import { useAssetStore } from '@/stores/assetStore'
-import { Button } from '@/components/ui/button'
-import { nanoid } from 'nanoid'
-import { Dialogue, Scene } from '@/game/types'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger
+} from '@/components/ui/collapsible'
 
 const DEBOUNCE_TIME = 200
 
@@ -40,6 +66,7 @@ export const GameEditorSidebar: React.FC = () => {
   const { uploadFiles } = useAssetStore()
   const scenes = useGameStore(state => state.scenes)
   const addScene = useGameStore(state => state.addScene)
+  const deleteChoice = useGameStore(state => state.deleteChoice)
   const [userOpenSections, setUserOpenSections] = useState<Record<string, boolean>>(
     {}
   )
@@ -410,6 +437,61 @@ export const GameEditorSidebar: React.FC = () => {
                         )}
                       </SidebarMenuItem>
                     </DnDDroppableWrapper>
+                    <Collapsible className="group/collapsible">
+                      <SidebarMenuItem>
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton className="group/choices w-full !pr-2">
+                            <div className="flex items-center w-full">
+                              <div className="flex items-center gap-2">
+                                <GitBranch className="size-4 text-muted-foreground" />
+                                <span>Choices</span>
+                              </div>
+                              <ChevronRight
+                                className={cn(
+                                  'ml-auto h-4 w-4 transition-transform duration-200',
+                                  'opacity-0 group-hover/choices:opacity-100',
+                                  'group-data-[state=open]/collapsible:opacity-100 group-data-[state=open]/collapsible:rotate-90'
+                                )}
+                              />
+                            </div>
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <SidebarMenuSub>
+                            <SidebarMenuSubItem>
+                              <SceneChoicePicker sceneId={scene.id} />
+                            </SidebarMenuSubItem>
+                            {scene.choices?.map(choice => (
+                              <SidebarMenuSubItem key={choice.id}>
+                                <SidebarMenuSubButton
+                                  className={cn(
+                                    !scenes[choice.nextSceneId] &&
+                                      'border-red-400 bg-red-400'
+                                  )}
+                                >
+                                  {scenes[choice.nextSceneId] ? (
+                                    <span>
+                                      {scenes[choice.nextSceneId]?.name ||
+                                        scenes[choice.nextSceneId]?.id}
+                                    </span>
+                                  ) : (
+                                    <span>{choice.nextSceneId}</span>
+                                  )}
+                                </SidebarMenuSubButton>
+                                <SidebarMenuAction
+                                  asChild
+                                  onClick={() => {
+                                    deleteChoice(scene.id, choice.id)
+                                  }}
+                                >
+                                  <Trash2 className="size-3" />
+                                </SidebarMenuAction>
+                              </SidebarMenuSubItem>
+                            ))}
+                          </SidebarMenuSub>
+                        </CollapsibleContent>
+                      </SidebarMenuItem>
+                    </Collapsible>
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
@@ -418,5 +500,85 @@ export const GameEditorSidebar: React.FC = () => {
         </SidebarContent>
       </Sidebar>
     </DndProvider>
+  )
+}
+
+const SceneChoicePicker = ({ sceneId }: { sceneId: string }) => {
+  const scenes = useGameStore(state => state.scenes)
+  const addChoice = useGameStore(state => state.addChoice)
+  const [open, setOpen] = useState(false)
+  const [value, setValue] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const sceneOptions = Object.entries(scenes)
+    .filter(([id]) => id !== sceneId) // cant choose current scene
+    .filter(
+      ([id]) => !scenes[sceneId].choices?.some(choice => choice.nextSceneId === id) // cant choose scenes already chosen
+    )
+    .map(([id, scene]) => ({
+      value: id,
+      label: scene.name || id
+    }))
+
+  const handleSubmit = (v: string) => {
+    const selectedScene = sceneOptions.find(scene => scene.value === v)
+    if (selectedScene) {
+      addChoice(sceneId, {
+        id: nanoid(),
+        label: selectedScene.label,
+        nextSceneId: selectedScene.value
+      })
+      setValue('')
+      setOpen(false)
+    }
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between"
+        >
+          <span className="truncate">
+            {value
+              ? sceneOptions.find(scene => scene.value === value)?.label
+              : 'Add choice...'}
+          </span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[200px] p-0" align="start">
+        <Command>
+          <CommandInput ref={inputRef} placeholder="Search scenes..." />
+          <CommandList>
+            <CommandEmpty>No scenes found.</CommandEmpty>
+            <CommandGroup>
+              {sceneOptions.map(scene => (
+                <CommandItem
+                  key={scene.value}
+                  value={scene.value}
+                  onSelect={currentValue => {
+                    console.log('selected')
+                    setValue(currentValue === value ? '' : currentValue)
+                    handleSubmit(currentValue)
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      'mr-2 h-4 w-4',
+                      value === scene.value ? 'opacity-100' : 'opacity-0'
+                    )}
+                  />
+                  {scene.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   )
 }

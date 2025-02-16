@@ -19,7 +19,7 @@ export interface Layer {
 export type Choice = {
   id: string
   label: string
-  nextSceneId: string
+  nextSceneId: Scene['id']
 }
 
 export type Dialogue = {

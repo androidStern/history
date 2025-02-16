@@ -1,5 +1,5 @@
 import { applyDefaults, loadGameData } from '@/game/gameData'
-import { Dialogue, ImageAsset, Scene } from '@/game/types'
+import { Choice, Dialogue, ImageAsset, Scene } from '@/game/types'
 import { nanoid } from 'nanoid'
 import { createContext, useContext } from 'react'
 import { create } from 'zustand'
@@ -67,6 +67,8 @@ type GameActions = {
   ) => void
   changeSpeaker: (sceneId: string, dialogueId: string, newSpeaker: string) => void
   addDialogue: (sceneId: string, dialogueItem: Partial<Dialogue>) => Dialogue
+  deleteChoice: (sceneId: Scene['id'], choiceId: Choice['id']) => void
+  addChoice: (sceneId: Scene['id'], choice: Choice) => void
   getAllSpeakers: () => string[]
   createSnapshot: () => void
   restoreSnapshot: () => void
@@ -81,7 +83,7 @@ export const useGameStore = create<GameState & GameActions>()(
         const newSceneId = nanoid()
         state.scenes[newSceneId] = applyDefaults({
           id: newSceneId,
-          name,
+          name
         })
       })
     },
@@ -256,6 +258,22 @@ export const useGameStore = create<GameState & GameActions>()(
       })
 
       return completeDialogueItem // @TODO: handle failure cases like not finding a scene
+    },
+    deleteChoice: (sceneId: Scene['id'], choiceId: Choice['id']) => {
+      set(state => {
+        const scene = state.scenes[sceneId]
+        if (scene?.choices) {
+          scene.choices = scene.choices.filter(c => c.id !== choiceId)
+        }
+      })
+    },
+    addChoice: (sceneId: Scene['id'], choice: Choice) => {
+      set(state => {
+        const scene = state.scenes[sceneId]
+        if (scene) {
+          scene.choices = [...(scene.choices || []), choice]
+        }
+      })
     },
     getAllSpeakers: () => {
       return Array.from(
