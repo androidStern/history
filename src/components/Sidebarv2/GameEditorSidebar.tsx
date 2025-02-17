@@ -239,6 +239,7 @@ export const GameEditorSidebar: React.FC = () => {
                             )}
                             {scene.dialogue.map((item, index) => (
                               <DnDItemWrapper
+                                onDrop={() => onDrop(`${scene.id}-dialogue`)}
                                 key={item.id + '-dialogue'}
                                 type="dialogue"
                                 itemId={item.id}
@@ -287,6 +288,7 @@ export const GameEditorSidebar: React.FC = () => {
                             {draftDialogue &&
                               draftDialogue.sceneId === scene.id && (
                                 <DnDItemWrapper
+                                  onDrop={() => onDrop(`${scene.id}-dialogue`)}
                                   key={draftDialogue.id + '-dialogue'}
                                   type="dialogue"
                                   itemId={draftDialogue.id}
@@ -400,6 +402,9 @@ export const GameEditorSidebar: React.FC = () => {
                                           sceneId={scene.id}
                                           layerId={layer.id}
                                           index={index}
+                                          onDrop={() =>
+                                            onDrop(`${scene.id}-layer-${layer.id}`)
+                                          }
                                         >
                                           <DraggableImageItem
                                             itemId={item.id}

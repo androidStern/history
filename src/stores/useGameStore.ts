@@ -105,6 +105,57 @@ export const createGameSlice: StateCreator<
         }
       }
     }),
+  copyItem: (
+    itemType,
+    sourceSceneId,
+    targetSceneId,
+    itemId,
+    newIndex,
+    sourceLayerId,
+    targetLayerId
+  ) =>
+    set(state => {
+      const sourceScene = state.scenes[sourceSceneId]
+      const targetScene = state.scenes[targetSceneId]
+      if (!sourceScene || !targetScene) {
+        return state
+      }
+
+      if (itemType === 'dialogue') {
+        const sourceItem = sourceScene.dialogue.find(d => d.id === itemId)
+        if (!sourceItem) {
+          return state
+        }
+        const newItem = {
+          ...sourceItem,
+          id: nanoid()
+        }
+        targetScene.dialogue.splice(newIndex, 0, newItem)
+      } else if (itemType === 'image') {
+        const sourceLayer = sourceScene.layers.find(l => l.id === sourceLayerId)
+        const targetLayer = targetScene.layers.find(l => l.id === targetLayerId)
+
+        if (!sourceLayer || !targetLayer) {
+          return state
+        }
+
+        const sourceItem = sourceLayer.items.find(i => i.id === itemId)
+        if (!sourceItem) {
+          return state
+        }
+
+        const newItem = {
+          ...sourceItem,
+          id: nanoid()
+        }
+
+        if (targetLayer.items.length === 0) {
+          targetLayer.items.push(newItem)
+        } else {
+          targetLayer.items.splice(newIndex, 0, newItem)
+        }
+      }
+    }),
   addImage: (sceneId: string, layerId: string, newItem: Partial<ImageAsset>) => {
     set(state => {
       if (!newItem.url) return

@@ -24,6 +24,12 @@ export interface DraggedItem {
   sceneId: string
   layerId?: string
   index: number
+  originalSceneId: string
+  originalLayerId?: string
+  originalIndex: number
+  targetSceneId: string
+  targetLayerId?: string
+  onDrop: () => void
 }
 
 export const layerSchema = z.object({
@@ -86,6 +92,15 @@ export type GameActions = {
   setName: (name: string) => void
   addScene: (name: string) => void
   moveItem: (
+    itemType: ItemType,
+    sourceSceneId: string,
+    targetSceneId: string,
+    itemId: string,
+    newIndex: number,
+    sourceLayerId?: string,
+    targetLayerId?: string
+  ) => void
+  copyItem: (
     itemType: ItemType,
     sourceSceneId: string,
     targetSceneId: string,

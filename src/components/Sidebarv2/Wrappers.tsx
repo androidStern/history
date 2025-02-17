@@ -1,10 +1,12 @@
 import { DraggedItem, ItemType, Layer, Scene } from '@/game/types'
+import { useKeyboardState } from '@/stores/keyboardStateStore'
 import {
   DraggableItemContext,
   DroppableItemContext,
   useGameStore
 } from '@/stores/useGameStore'
 import { Root } from '@radix-ui/react-slot'
+
 import { PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react'
 import { ConnectableElement, DragSourceMonitor, useDrag, useDrop } from 'react-dnd'
 
@@ -14,6 +16,7 @@ interface DnDItemWrapperProps extends PropsWithChildren {
   sceneId: Scene['id']
   layerId?: Layer['id']
   index: number
+  onDrop: () => void
 }
 
 interface DragCollectedProps {
@@ -26,26 +29,67 @@ export function DnDItemWrapper({
   sceneId,
   layerId,
   index,
-  children
+  children,
+  onDrop
 }: DnDItemWrapperProps) {
   const [canDrag, setCanDrag] = useState(true)
   const moveItem = useGameStore(s => s.moveItem)
+  const copyItem = useGameStore(s => s.copyItem)
   const reorderItem = useGameStore(s => s.reorderItem)
   const createSnapshot = useGameStore(s => s.createSnapshot)
   const restoreSnapshot = useGameStore(s => s.restoreSnapshot)
   const ref = useRef<ConnectableElement | null>(null)
+  const { isOptionKeyPressed } = useKeyboardState()
 
   const [{ isDragging }, drag] = useDrag<DraggedItem, void, DragCollectedProps>({
     type: `${type}-item`,
     canDrag: () => canDrag,
     item: () => {
       createSnapshot()
-      return { id: itemId, index, type, sceneId, layerId } satisfies DraggedItem
+      return {
+        id: itemId,
+        index,
+        type,
+        sceneId,
+        layerId,
+        originalSceneId: sceneId,
+        originalLayerId: layerId,
+        originalIndex: index,
+        targetSceneId: sceneId,
+        targetLayerId: layerId,
+        onDrop: onDrop
+      } satisfies DraggedItem
     },
-    end: (_item, monitor) => {
+    end: (_item: DraggedItem, monitor) => {
       if (!monitor.didDrop()) {
-        restoreSnapshot()
+        return restoreSnapshot()
       }
+
+      const item = monitor.getDropResult() as DraggedItem
+
+      if (isOptionKeyPressed) {
+        restoreSnapshot()
+        copyItem(
+          item.type,
+          item.originalSceneId,
+          item.targetSceneId,
+          item.id,
+          item.index,
+          item.originalLayerId,
+          item.targetLayerId
+        )
+      } else {
+        moveItem(
+          type,
+          item.sceneId,
+          item.targetSceneId,
+          item.id,
+          item.index,
+          item.layerId,
+          item.targetLayerId
+        )
+      }
+      item.onDrop()
     },
     collect: (
       monitor: DragSourceMonitor<DraggedItem, void>
@@ -56,6 +100,9 @@ export function DnDItemWrapper({
 
   const [{ isOver }, drop] = useDrop({
     accept: `${type}-item`,
+    drop: (item: DraggedItem) => {
+      return { ...item, targetSceneId: sceneId, targetLayerId: layerId, onDrop }
+    },
     hover: (dragItem: DraggedItem) => {
       if (!ref.current) return
 
@@ -143,8 +190,6 @@ export const DnDDroppableWrapper: React.FC<DnDDroppableWrapperProps> = ({
   onDragLeave,
   onDrop
 }) => {
-  const moveItem = useGameStore(state => state.moveItem)
-
   const [isFromSameCollection, setIsFromSameCollection] = useState(false)
 
   const [{ isOver }, drop] = useDrop({
@@ -154,16 +199,7 @@ export const DnDDroppableWrapper: React.FC<DnDDroppableWrapperProps> = ({
     },
     drop: (item: DraggedItem) => {
       if (isSameCollection(item)) return
-      moveItem(
-        type,
-        item.sceneId,
-        sceneId,
-        item.id,
-        0,
-        item.layerId,
-        layerId || item.layerId
-      )
-      onDrop()
+      return { ...item, targetSceneId: sceneId, targetLayerId: layerId, onDrop }
     },
     collect: monitor => ({ isOver: !!monitor.isOver() })
   })
