@@ -1,21 +1,27 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Print header
-echo "# File list generated at $(date)"
-echo
+# Usage: ./list-files.sh [files-or-directories...]
+# Example: ./list-files.sh "*/comp*/**"
 
-# Find all files in src directory and print with comments
-find src -type f \
-  ! -path "*/\.*" \
-  ! -name "*.jpg" \
-  ! -name "*.jpeg" \
-  ! -name "*.png" \
-  ! -name "*.gif" \
-  ! -name "*.svg" \
-  ! -name "*.css" \
-  ! -name "*.ico" | \
-while read -r file; do
-  echo "# File: $file"
-  cat "$file"
-  echo -e "\n"
+if [ $# -eq 0 ]; then
+  echo "Usage: $0 <file-or-directory> ..."
+  exit 1
+fi
+
+for path in "$@"; do
+  if [ -f "$path" ]; then
+    echo "### File: $path"
+    cat "$path"
+    echo
+  elif [ -d "$path" ]; then
+    # Recursively find files in the directory
+    find "$path" -type f 2>/dev/null | while IFS= read -r f; do
+      echo "### File: $f"
+      cat "$f"
+      echo
+    done
+  else
+    echo "Skipping: $path (not a file or directory)"
+  fi
 done
