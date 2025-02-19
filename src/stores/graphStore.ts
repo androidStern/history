@@ -25,7 +25,6 @@ export const createGraphSlice: StateCreator<
   // Actions
   onNodesChange: (changes: NodeChange[]) => {
     set(state => {
-      console.log('onNodesChange', changes)
       state.nodes = applyNodeChanges(changes, state.nodes)
     })
 
@@ -70,7 +69,7 @@ export const createGraphSlice: StateCreator<
         source: scene.id,
         target: connection.target,
         label: 'Some Label',
-        type: 'smoothstep',
+        type: 'nonOverlapping',
         markerEnd: MarkerType.ArrowClosed
       }
 

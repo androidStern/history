@@ -26,6 +26,13 @@ export default tseslint.config(
     settings: {
       'boundaries/elements': [
         {
+          type: 'smart_edges',
+          pattern: '**/*.{ts,tsx}',
+          basePattern: 'src/smart_edges',
+          capture: ['elementName'],
+          mode: 'file'
+        },
+        {
           type: 'ui-components',
           pattern: '**/*.{ts,tsx}',
           basePattern: 'src/components/ui',
@@ -104,15 +111,7 @@ export default tseslint.config(
             // App can import from anywhere
             {
               from: ['app'],
-              allow: [
-                'components',
-                'ui-components',
-                'game',
-                'lib',
-                'styles',
-                'app',
-                'store'
-              ]
+              allow: ['components', 'ui-components', 'game', 'lib', 'styles', 'app', 'store']
             },
             {
               from: ['store'],
@@ -126,7 +125,7 @@ export default tseslint.config(
             // Components can import from lib and game (for types)
             {
               from: ['components'],
-              allow: ['lib', 'game', 'ui-components', 'store', 'components']
+              allow: ['lib', 'game', 'ui-components', 'store', 'components', 'smart_edges']
             },
             // UI components can only import from lib and components
             {
@@ -142,41 +141,36 @@ export default tseslint.config(
         }
       ],
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true }
-      ],
+      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       // 'import/no-relative-parent-imports': 'error',
       'import/no-relative-packages': 'error',
       'import/first': 'error',
       'import/no-duplicates': 'error',
       'import/consistent-type-specifier-style': ['error', 'prefer-top-level'],
-      'no-restricted-imports': [
-        'error',
-        {
-          paths: [
-            {
-              name: '@dnd-kit/core',
-              importNames: ['useDroppable', 'useDraggable'],
-              message:
-                'Please use our type-safe hooks from @/dnd-system instead: useSystemDroppable and useSystemDraggable'
-            }
-          ],
-          patterns: [
-            {
-              group: ['./*', '../*'],
-              message:
-                'Please use absolute imports with @ alias instead of relative paths'
-            }
-          ]
-        }
-      ]
+      'no-restricted-imports': ['error', {
+        paths: [{
+          name: '@dnd-kit/core',
+          importNames: ['useDroppable', 'useDraggable'],
+          message: 'Please use our type-safe hooks from @/dnd-system instead: useSystemDroppable and useSystemDraggable'
+        }],
+        patterns: [{
+          group: ['./*', '../*', '!./smart_edges/**/*', '!../smart_edges/**/*'],
+          message: 'Please use absolute imports with @ alias instead of relative paths'
+        }]
+      }]
     }
   },
   {
     files: ['src/components/ui/**/*.tsx'],
     rules: {
       'react-refresh/only-export-components': 'off'
+    }
+  },
+  {
+    files: ['src/smart_edges/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': 'off',
+      'boundaries/element-types': 'off'
     }
   }
 )

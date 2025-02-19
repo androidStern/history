@@ -18,26 +18,24 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <SidebarProvider open={isOpen} onOpenChange={setIsOpen}>
-        <GameEditorSidebar
-          setGraphMode={(graphMode: boolean) => setCurrentView(graphMode ? 'graph' : 'game')}
-        />
-        <SidebarTrigger />
-        <main className="w-full h-screen flex-1 flex items-center justify-center">
-          {currentView === 'game' && (
-            <>
-              <WorldView />
-              <PrintConfig />
-            </>
-          )}
-          {currentView === 'graph' && (
-            <ReactFlowProvider>
-              <SceneGraph />
-            </ReactFlowProvider>
-          )}
-          <Toaster />
-        </main>
-      </SidebarProvider>
+      <ReactFlowProvider>
+        <SidebarProvider open={isOpen} onOpenChange={setIsOpen}>
+          <GameEditorSidebar
+            setGraphMode={(graphMode: boolean) => setCurrentView(graphMode ? 'graph' : 'game')}
+          />
+          <SidebarTrigger />
+          <main className="w-full h-screen flex-1 flex items-center justify-center">
+            {currentView === 'game' && (
+              <>
+                <WorldView />
+                <PrintConfig />
+              </>
+            )}
+            {currentView === 'graph' && <SceneGraph />}
+            <Toaster />
+          </main>
+        </SidebarProvider>
+      </ReactFlowProvider>
     </ErrorBoundary>
   )
 }

@@ -530,7 +530,6 @@ const SceneChoicePicker = ({ sceneId }: { sceneId: string }) => {
                   key={scene.value}
                   value={scene.value}
                   onSelect={currentValue => {
-                    console.log('selected')
                     setValue(currentValue === value ? '' : currentValue)
                     handleSubmit(currentValue)
                   }}

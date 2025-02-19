@@ -9,12 +9,12 @@ import {
   StoreState
 } from '@/game/types'
 import { createAssetStoreSlice } from '@/stores/assetStore'
-import { Edge, MarkerType } from '@xyflow/react'
+import { createGraphSlice } from '@/stores/graphStore'
+import { Edge, MarkerType, Node, Position } from '@xyflow/react'
 import { nanoid } from 'nanoid'
 import { createContext, useContext } from 'react'
 import { create, StateCreator } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
-import { createGraphSlice } from '@/stores/graphStore'
 
 export const createGameSlice: StateCreator<
   StoreState,
@@ -45,9 +45,6 @@ export const createGameSlice: StateCreator<
     const currentState = get()
     const newNodes = toRFNodes(currentState.scenes)
     const newEdges = toRFEdges(currentState.scenes)
-
-    console.log('Fresh state scenes:', Object.keys(currentState.scenes))
-    console.log('Generated new nodes:', newNodes)
 
     // Update the nodes and edges
     set({
@@ -364,15 +361,15 @@ export const useGameStore = create<StoreState>()(
   }))
 )
 
-export function toRFNodes(scenes: Record<string, Scene>) {
+export function toRFNodes(scenes: Record<string, Scene>): Node[] {
   return Object.values(scenes).map(scene => {
     const { graphX = 0, graphY = 0 } = scene // or if you store it differently
     return {
       id: scene.id,
       position: { x: graphX, y: graphY },
       data: { label: scene.name },
-      sourcePosition: 'right',
-      targetPosition: 'left'
+      sourcePosition: Position.Right,
+      targetPosition: Position.Left
     }
   })
 }
@@ -386,7 +383,7 @@ export function toRFEdges(scenes: Record<string, Scene>) {
         source: scene.id,
         target: choice.nextSceneId,
         label: choice.label,
-        type: 'smoothstep',
+        type: 'nonOverlapping',
         markerEnd: MarkerType.ArrowClosed
       })
     })

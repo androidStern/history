@@ -1,6 +1,11 @@
+import { useGameStore } from '@/stores/useGameStore'
+import { SmartStepEdge } from '@/smart_edges/SmartStepEdge'
 import { MarkerType, ReactFlow } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { useGameStore } from '@/stores/useGameStore'
+
+const edgeTypes = {
+  nonOverlapping: SmartStepEdge
+}
 
 export function SceneGraph() {
   const store = useGameStore()
@@ -14,9 +19,10 @@ export function SceneGraph() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        edgeTypes={edgeTypes}
         defaultEdgeOptions={{
           animated: true,
-          type: 'smoothstep',
+          type: 'nonOverlapping',
           markerEnd: MarkerType.ArrowClosed
         }}
       />
