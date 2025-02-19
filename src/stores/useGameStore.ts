@@ -1,23 +1,23 @@
 import { applyDefaults, loadGameData } from '@/game/gameData'
 import {
-  AssetActions,
-  AssetState,
-  AssetStore,
   Choice,
   Dialogue,
   GameActions,
   GameState,
   ImageAsset,
-  Scene
+  Scene,
+  StoreState
 } from '@/game/types'
 import { createAssetStoreSlice } from '@/stores/assetStore'
+import { Edge, MarkerType } from '@xyflow/react'
 import { nanoid } from 'nanoid'
 import { createContext, useContext } from 'react'
 import { create, StateCreator } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
+import { createGraphSlice } from '@/stores/graphStore'
 
 export const createGameSlice: StateCreator<
-  GameState & GameActions & AssetState & AssetActions,
+  StoreState,
   [['zustand/immer', never]],
   [],
   GameState & GameActions
@@ -30,12 +30,29 @@ export const createGameSlice: StateCreator<
     })
   },
   addScene: (name: string) => {
+    let newSceneId: string
+
+    // First update to add the scene
     set(state => {
-      const newSceneId = nanoid()
+      newSceneId = nanoid()
       state.scenes[newSceneId] = applyDefaults({
         id: newSceneId,
         name
       })
+    })
+
+    // Get fresh state
+    const currentState = get()
+    const newNodes = toRFNodes(currentState.scenes)
+    const newEdges = toRFEdges(currentState.scenes)
+
+    console.log('Fresh state scenes:', Object.keys(currentState.scenes))
+    console.log('Generated new nodes:', newNodes)
+
+    // Update the nodes and edges
+    set({
+      nodes: newNodes,
+      edges: newEdges
     })
   },
   update: (sceneId, layerId, itemId, newItem) => {
@@ -266,6 +283,7 @@ export const createGameSlice: StateCreator<
       const scene = state.scenes[sceneId]
       if (scene?.choices) {
         scene.choices = scene.choices.filter(c => c.id !== choiceId)
+        state.edges = toRFEdges(state.scenes)
       }
     })
   },
@@ -275,6 +293,7 @@ export const createGameSlice: StateCreator<
       if (scene) {
         scene.choices = [...(scene.choices || []), choice]
       }
+      state.edges = toRFEdges(state.scenes)
     })
   },
   getAllSpeakers: () => {
@@ -315,12 +334,8 @@ export interface DraggableItemContextValue {
   isOver: boolean
 }
 
-export const DraggableItemContext = createContext<DraggableItemContextValue | null>(
-  null
-)
-export const DroppableItemContext = createContext<DroppableItemContextValue | null>(
-  null
-)
+export const DraggableItemContext = createContext<DraggableItemContextValue | null>(null)
+export const DroppableItemContext = createContext<DroppableItemContextValue | null>(null)
 
 export function useDraggableItemContext() {
   const context = useContext(DraggableItemContext)
@@ -340,10 +355,41 @@ export function useDroppableItemContext() {
 
 const defaultGame = loadGameData()
 
-export const useGameStore = create<(GameState & GameActions) & AssetStore>()(
+export const useGameStore = create<StoreState>()(
   immer((...args) => ({
     ...defaultGame,
     ...createAssetStoreSlice(...args),
+    ...createGraphSlice(...args),
     ...createGameSlice(...args)
   }))
 )
+
+export function toRFNodes(scenes: Record<string, Scene>) {
+  return Object.values(scenes).map(scene => {
+    const { graphX = 0, graphY = 0 } = scene // or if you store it differently
+    return {
+      id: scene.id,
+      position: { x: graphX, y: graphY },
+      data: { label: scene.name },
+      sourcePosition: 'right',
+      targetPosition: 'left'
+    }
+  })
+}
+
+export function toRFEdges(scenes: Record<string, Scene>) {
+  const edges: Edge[] = []
+  Object.values(scenes).forEach(scene => {
+    scene.choices?.forEach(choice => {
+      edges.push({
+        id: `${scene.id}-${choice.id}`,
+        source: scene.id,
+        target: choice.nextSceneId,
+        label: choice.label,
+        type: 'smoothstep',
+        markerEnd: MarkerType.ArrowClosed
+      })
+    })
+  })
+  return edges
+}

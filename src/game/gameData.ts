@@ -1,4 +1,6 @@
 import { Layer, Scene, sceneSchema, SpriteConfig } from '@/game/types'
+import { toRFEdges, toRFNodes } from '@/stores/useGameStore'
+import { Edge, Node } from '@xyflow/react'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 
@@ -39,7 +41,9 @@ export const applyDefaults = (scene: Partial<Scene>): Scene => {
     layers: defaultedLayers,
     dialogue: scene.dialogue || [],
     choices: scene.choices || [],
-    width: scene.width || 2000
+    width: scene.width || 2000,
+    graphX: scene.graphX || 0,
+    graphY: scene.graphY || 0
   }
 }
 
@@ -48,13 +52,13 @@ const rawScenes: Record<string, Scene> = {
     id: 'sceneA',
     name: 'Forest Scene',
     width: 2000,
+    graphX: 100,
+    graphY: 100,
     layers: [
       {
         id: 'bg',
         parallaxFactor: 0.5,
-        items: [
-          { id: 'bg1', url: canyonRockPath, name: 'Canyon Rock', x: 300, y: 400 }
-        ]
+        items: [{ id: 'bg1', url: canyonRockPath, name: 'Canyon Rock', x: 300, y: 400 }]
       },
       {
         id: 'mid',
@@ -114,6 +118,8 @@ const rawScenes: Record<string, Scene> = {
     id: 'sceneB',
     name: 'Desert Scene',
     width: 2200,
+    graphX: 200,
+    graphY: 200,
     layers: [
       {
         id: 'bg',
@@ -164,6 +170,8 @@ export type GameData = {
   heroConfig?: SpriteConfig
   name: string
   assetMap?: Map<string, string>
+  nodes: Node[]
+  edges: Edge[]
 }
 
 export const loadGameData = (): GameData => {
@@ -176,7 +184,9 @@ export const loadGameData = (): GameData => {
   return {
     scenes: processedScenes,
     heroConfig,
-    name: 'History'
+    name: 'History',
+    nodes: toRFNodes(processedScenes),
+    edges: toRFEdges(processedScenes)
   }
 }
 

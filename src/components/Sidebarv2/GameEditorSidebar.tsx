@@ -4,16 +4,9 @@ import AssetSidebarMenu from '@/components/Sidebarv2/AssetSidebarMenu'
 import { DraggableDialogueItem } from '@/components/Sidebarv2/DraggableDialogueItem'
 import { DraggableImageItem } from '@/components/Sidebarv2/DraggableImageItem'
 import Footer from '@/components/Sidebarv2/Footer'
-import {
-  DnDDroppableWrapper,
-  DnDItemWrapper
-} from '@/components/Sidebarv2/Wrappers'
+import { DnDDroppableWrapper, DnDItemWrapper } from '@/components/Sidebarv2/Wrappers'
 import { Button } from '@/components/ui/button'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger
-} from '@/components/ui/collapsible'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   Command,
   CommandEmpty,
@@ -45,26 +38,26 @@ import { useCallback, useRef, useState } from 'react'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { useDebouncedCallback } from 'use-debounce'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 
 const DEBOUNCE_TIME = 200
 
-export const GameEditorSidebar: React.FC = () => {
+export const GameEditorSidebar: React.FC<{ setGraphMode: (value: boolean) => void }> = ({
+  setGraphMode
+}) => {
   const { uploadFiles } = useGameStore()
   const scenes = useGameStore(state => state.scenes)
   const addScene = useGameStore(state => state.addScene)
   const deleteChoice = useGameStore(state => state.deleteChoice)
-  const [userOpenSections, setUserOpenSections] = useState<Record<string, boolean>>(
-    {}
-  )
-  const [forcedOpenSections, setForcedOpenSections] = useState<
-    Record<string, boolean>
-  >({})
+  const [userOpenSections, setUserOpenSections] = useState<Record<string, boolean>>({})
+  const [forcedOpenSections, setForcedOpenSections] = useState<Record<string, boolean>>({})
 
   const [isAssetsOpen, setIsAssetsOpen] = useState(false)
 
-  const [draftDialogue, setDraftDialogue] = useState<
-    (Dialogue & { sceneId: Scene['id'] }) | null
-  >(null)
+  const [draftDialogue, setDraftDialogue] = useState<(Dialogue & { sceneId: Scene['id'] }) | null>(
+    null
+  )
 
   const [draftScene, setDraftScene] = useState<Scene | null>(null)
 
@@ -145,12 +138,15 @@ export const GameEditorSidebar: React.FC = () => {
           }
         }}
       >
+        <SB.SidebarHeader>
+          <div className="flex items-center space-x-2">
+            <Switch id="graph-mode" onCheckedChange={setGraphMode} />
+            <Label htmlFor="graph-mode">Graph Mode</Label>
+          </div>
+        </SB.SidebarHeader>
         <SB.SidebarContent>
           <SB.SidebarGroup>
-            <AssetSidebarMenu
-              isAssetsOpen={isAssetsOpen}
-              setIsAssetsOpen={setIsAssetsOpen}
-            />
+            <AssetSidebarMenu isAssetsOpen={isAssetsOpen} setIsAssetsOpen={setIsAssetsOpen} />
           </SB.SidebarGroup>
           <SB.SidebarGroup>
             <SB.SidebarGroupLabel>
@@ -163,7 +159,9 @@ export const GameEditorSidebar: React.FC = () => {
                   name: '',
                   width: 1920,
                   layers: [],
-                  dialogue: []
+                  dialogue: [],
+                  graphX: 0,
+                  graphY: 0
                 })
               }
               title="Add Scene"
@@ -178,9 +176,7 @@ export const GameEditorSidebar: React.FC = () => {
                     type="text"
                     value={draftScene.name}
                     onChange={e =>
-                      setDraftScene(prev =>
-                        prev ? { ...prev, name: e.target.value } : null
-                      )
+                      setDraftScene(prev => (prev ? { ...prev, name: e.target.value } : null))
                     }
                     onKeyDown={e => {
                       if (e.key === 'Enter') {
@@ -225,8 +221,7 @@ export const GameEditorSidebar: React.FC = () => {
                             className={cn(
                               'h-4 w-4 transition-transform duration-200',
                               'opacity-0 rotate-[-90deg] group-hover/dialogue:opacity-100',
-                              isOpen(scene.id, 'dialogue') &&
-                                'opacity-100 !rotate-0'
+                              isOpen(scene.id, 'dialogue') && 'opacity-100 !rotate-0'
                             )}
                           />
                         </SB.SidebarMenuButton>
@@ -279,33 +274,30 @@ export const GameEditorSidebar: React.FC = () => {
                                   <div className="w-5 h-5 rounded-full border border-current flex items-center justify-center">
                                     <Plus className="w-3 h-3" />
                                   </div>
-                                  <span className="italic text-sm">
-                                    add dialogue
-                                  </span>
+                                  <span className="italic text-sm">add dialogue</span>
                                 </Button>
                               </div>
                             )}
-                            {draftDialogue &&
-                              draftDialogue.sceneId === scene.id && (
-                                <DnDItemWrapper
-                                  onDrop={() => onDrop(`${scene.id}-dialogue`)}
-                                  key={draftDialogue.id + '-dialogue'}
-                                  type="dialogue"
+                            {draftDialogue && draftDialogue.sceneId === scene.id && (
+                              <DnDItemWrapper
+                                onDrop={() => onDrop(`${scene.id}-dialogue`)}
+                                key={draftDialogue.id + '-dialogue'}
+                                type="dialogue"
+                                itemId={draftDialogue.id}
+                                sceneId={scene.id}
+                                index={scene.dialogue.length}
+                              >
+                                <DraggableDialogueItem
+                                  initialIsEditing={true}
                                   itemId={draftDialogue.id}
                                   sceneId={scene.id}
-                                  index={scene.dialogue.length}
-                                >
-                                  <DraggableDialogueItem
-                                    initialIsEditing={true}
-                                    itemId={draftDialogue.id}
-                                    sceneId={scene.id}
-                                    content={draftDialogue.text}
-                                    speaker={draftDialogue.speaker}
-                                    onCancel={() => setDraftDialogue(null)}
-                                    onSubmit={() => setDraftDialogue(null)}
-                                  />
-                                </DnDItemWrapper>
-                              )}
+                                  content={draftDialogue.text}
+                                  speaker={draftDialogue.speaker}
+                                  onCancel={() => setDraftDialogue(null)}
+                                  onSubmit={() => setDraftDialogue(null)}
+                                />
+                              </DnDItemWrapper>
+                            )}
                             {/* add "new dialogue" button. */}
                           </SB.SidebarGroupContent>
                         )}
@@ -333,8 +325,7 @@ export const GameEditorSidebar: React.FC = () => {
                             className={cn(
                               'h-4 w-4 transition-transform duration-200',
                               'opacity-0 rotate-[-90deg] group-hover/imageAssets:opacity-100',
-                              isOpen(scene.id, 'imageAssets') &&
-                                'opacity-100 !rotate-0'
+                              isOpen(scene.id, 'imageAssets') && 'opacity-100 !rotate-0'
                             )}
                           />
                         </SB.SidebarMenuSubButton>
@@ -347,29 +338,20 @@ export const GameEditorSidebar: React.FC = () => {
                             )}
                             {scene.layers.map(layer => (
                               <DnDDroppableWrapper
-                                onDrop={() =>
-                                  onDrop(`${scene.id}-layer-${layer.id}`)
-                                }
-                                onDragEnter={() =>
-                                  handleDragEnter(`${scene.id}-layer-${layer.id}`)
-                                }
-                                onDragLeave={() =>
-                                  handleDragLeave(`${scene.id}-layer-${layer.id}`)
-                                }
+                                onDrop={() => onDrop(`${scene.id}-layer-${layer.id}`)}
+                                onDragEnter={() => handleDragEnter(`${scene.id}-layer-${layer.id}`)}
+                                onDragLeave={() => handleDragLeave(`${scene.id}-layer-${layer.id}`)}
                                 key={layer.id}
                                 type="image"
                                 sceneId={scene.id}
                                 layerId={layer.id}
                                 isSameCollection={item =>
-                                  item.sceneId === scene.id &&
-                                  item.layerId === layer.id
+                                  item.sceneId === scene.id && item.layerId === layer.id
                                 }
                               >
                                 <SB.SidebarMenuSubItem>
                                   <SB.SidebarMenuSubButton
-                                    onClick={() =>
-                                      toggleSection(scene.id, `layer-${layer.id}`)
-                                    }
+                                    onClick={() => toggleSection(scene.id, `layer-${layer.id}`)}
                                     className="flex justify-between items-center w-full group/imagelayer"
                                   >
                                     <div className="flex items-center gap-2">
@@ -402,9 +384,7 @@ export const GameEditorSidebar: React.FC = () => {
                                           sceneId={scene.id}
                                           layerId={layer.id}
                                           index={index}
-                                          onDrop={() =>
-                                            onDrop(`${scene.id}-layer-${layer.id}`)
-                                          }
+                                          onDrop={() => onDrop(`${scene.id}-layer-${layer.id}`)}
                                         >
                                           <DraggableImageItem
                                             itemId={item.id}
@@ -456,8 +436,7 @@ export const GameEditorSidebar: React.FC = () => {
                               <SB.SidebarMenuSubItem key={choice.id}>
                                 <SB.SidebarMenuSubButton
                                   className={cn(
-                                    !scenes[choice.nextSceneId] &&
-                                      'border-red-400 bg-red-400'
+                                    !scenes[choice.nextSceneId] && 'border-red-400 bg-red-400'
                                   )}
                                 >
                                   {scenes[choice.nextSceneId] ? (
@@ -535,9 +514,7 @@ const SceneChoicePicker = ({ sceneId }: { sceneId: string }) => {
           className="w-full justify-between"
         >
           <span className="truncate">
-            {value
-              ? sceneOptions.find(scene => scene.value === value)?.label
-              : 'Add choice...'}
+            {value ? sceneOptions.find(scene => scene.value === value)?.label : 'Add choice...'}
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>

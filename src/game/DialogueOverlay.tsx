@@ -13,7 +13,13 @@ interface DialogueOverlayProps {
   showBack: boolean
 }
 
-export default function DialogueOverlay({ dialogue, choices, onChoiceSelect, goBack, showBack }: DialogueOverlayProps) {
+export default function DialogueOverlay({
+  dialogue,
+  choices,
+  onChoiceSelect,
+  goBack,
+  showBack
+}: DialogueOverlayProps) {
   const [currentDialogueIndex, setCurrentDialogueIndex] = useState(0)
   const [displayedText, setDisplayedText] = useState('')
   const [showChoices, setShowChoices] = useState(false)
@@ -101,7 +107,12 @@ export default function DialogueOverlay({ dialogue, choices, onChoiceSelect, goB
       {showChoices && (
         <div className="gap-1">
           {choices.map(choice => (
-            <Button key={choice.id} variant="link" className="text-sm text-gray-400 hover:text-gray-300 font-light italic px-0" onClick={() => onChoiceSelect(choice.nextSceneId)}>
+            <Button
+              key={choice.id}
+              variant="link"
+              className="text-sm text-gray-400 hover:text-gray-300 font-light italic px-0"
+              onClick={() => onChoiceSelect(choice.nextSceneId)}
+            >
               {choice.label}
               <ArrowBigRightDash />
             </Button>
@@ -113,7 +124,11 @@ export default function DialogueOverlay({ dialogue, choices, onChoiceSelect, goB
         <div className="flex items-center justify-between py-1">
           {showBack && (
             <>
-              <Button variant="ghost" className="flex items-center gap-1 text-[10px] hover:bg-white/20 px-2 py-1" onClick={onGoBack}>
+              <Button
+                variant="ghost"
+                className="flex items-center gap-1 text-[10px] hover:bg-white/20 px-2 py-1"
+                onClick={onGoBack}
+              >
                 <Undo2 className="h-3 w-3" />
                 Back
               </Button>
@@ -121,14 +136,22 @@ export default function DialogueOverlay({ dialogue, choices, onChoiceSelect, goB
             </>
           )}
 
-          <Button variant="ghost" className="flex items-center gap-1 text-[10px] hover:bg-white/20 px-2 py-1" onClick={skip}>
+          <Button
+            variant="ghost"
+            className="flex items-center gap-1 text-[10px] hover:bg-white/20 px-2 py-1"
+            onClick={skip}
+          >
             <FastForward className="h-3 w-3" />
             Skip
           </Button>
 
           <Separator orientation="vertical" className="h-4 bg-white/20" />
 
-          <Button variant="ghost" className="flex items-center gap-1 text-[10px] hover:bg-white/20 px-2 py-1" onClick={restartDialogue}>
+          <Button
+            variant="ghost"
+            className="flex items-center gap-1 text-[10px] hover:bg-white/20 px-2 py-1"
+            onClick={restartDialogue}
+          >
             <RotateCcw className="h-3 w-3" />
             Restart
           </Button>

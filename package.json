@@ -42,6 +42,7 @@
     "@radix-ui/react-toggle-group": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.8",
     "@tailwindcss/vite": "^4.0.6",
+    "@xyflow/react": "^12.4.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.0",
@@ -69,16 +70,28 @@
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
     "use-debounce": "^10.0.4",
+    "use-sync-external-store": "^1.4.0",
     "vaul": "^1.1.2",
     "zod": "^3.24.2",
     "zustand": "^5.0.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "zustand": "^5.0.3",
+      "@types/react": "19.0.10",
+      "@types/react-dom": "19.0.4"
+    },
+    "onlyBuiltDependencies": [
+      "@swc/core",
+      "esbuild"
+    ]
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
     "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^22.13.4",
-    "@types/react": "^19.0.8",
-    "@types/react-dom": "^19.0.3",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react-swc": "^3.8.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.20.1",

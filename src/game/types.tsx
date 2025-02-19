@@ -1,3 +1,4 @@
+import { Edge, OnEdgesChange, OnNodesChange, Node, OnConnect } from '@xyflow/react'
 import { z } from 'zod'
 
 export const imageAssetSchema = z.object({
@@ -63,7 +64,9 @@ export const sceneSchema = z.object({
   name: z.string(),
   layers: z.array(layerSchema),
   dialogue: z.array(dialogueSchema),
-  choices: z.array(choiceSchema).optional()
+  choices: z.array(choiceSchema).optional(),
+  graphX: z.number(),
+  graphY: z.number()
 })
 
 export type Scene = z.infer<typeof sceneSchema>
@@ -117,12 +120,7 @@ export type GameActions = {
     newIndex: number,
     layerId?: string
   ) => void
-  deleteItem: (
-    itemType: ItemType,
-    sceneId: string,
-    itemId: string,
-    layerId?: string
-  ) => void
+  deleteItem: (itemType: ItemType, sceneId: string, itemId: string, layerId?: string) => void
   update: (
     sceneId: string,
     layerId: string,
@@ -137,12 +135,7 @@ export type GameActions = {
     }
   ) => void
   updateDialogueText: (sceneId: string, dialogueId: string, newText: string) => void
-  upsertDialogue: (
-    sceneId: string,
-    dialogueId: string,
-    newText: string,
-    speaker: string
-  ) => void
+  upsertDialogue: (sceneId: string, dialogueId: string, newText: string, speaker: string) => void
   changeSpeaker: (sceneId: string, dialogueId: string, newSpeaker: string) => void
   addDialogue: (sceneId: string, dialogueItem: Partial<Dialogue>) => Dialogue
   deleteChoice: (sceneId: Scene['id'], choiceId: Choice['id']) => void
@@ -162,13 +155,30 @@ export type AssetActions = {
   // Load scene data, scanning for any data URLs to preserve
   loadSceneData: (scenes: Record<string, Scene>) => void
   // Export scene data, optionally converting data URLs to file paths
-  exportSceneData: (
-    scenes: Record<string, Scene>,
-    forProduction?: boolean
-  ) => Record<string, Scene>
+  exportSceneData: (scenes: Record<string, Scene>, forProduction?: boolean) => Record<string, Scene>
   // Get all stored data URLs for saving to a file
   getStoredAssets: () => Record<string, string>
   uploadFiles: (files: FileList | null) => Promise<void>
 }
 
 export type AssetStore = AssetState & AssetActions
+
+export interface GraphState {
+  nodes: Node[]
+  edges: Edge[]
+}
+
+export interface GraphActions {
+  onNodesChange: OnNodesChange
+  onEdgesChange: OnEdgesChange
+  onConnect: OnConnect
+  setNodes: (nodes: Node[]) => void
+  setEdges: (edges: Edge[]) => void
+}
+
+export type StoreState = GameState &
+  GameActions &
+  AssetState &
+  AssetActions &
+  GraphState &
+  GraphActions

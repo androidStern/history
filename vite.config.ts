@@ -13,7 +13,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
+      '@': path.resolve(__dirname, './src'),
+      'use-sync-external-store/shim/with-selector': 'use-sync-external-store/shim/with-selector.js'
     }
   }
 })

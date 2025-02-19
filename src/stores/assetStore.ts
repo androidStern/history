@@ -1,17 +1,11 @@
-import {
-  AssetActions,
-  AssetState,
-  GameActions,
-  GameState,
-  Scene
-} from '@/game/types'
-import { enableMapSet } from 'immer'
 import { StateCreator } from 'zustand'
+import { AssetActions, AssetState, Scene, StoreState } from '@/game/types'
+import { enableMapSet } from 'immer'
 
 enableMapSet()
 
 export const createAssetStoreSlice: StateCreator<
-  GameState & GameActions & AssetState & AssetActions,
+  StoreState,
   [['zustand/immer', never]],
   [],
   AssetState & AssetActions
@@ -25,8 +19,7 @@ export const createAssetStoreSlice: StateCreator<
       return new Promise((resolve, reject) => {
         const reader = new FileReader()
         reader.onload = e => resolve([file.name, e.target?.result as string])
-        reader.onerror = () =>
-          reject(new Error(`Failed to read file: ${file.name}`))
+        reader.onerror = () => reject(new Error(`Failed to read file: ${file.name}`))
         reader.readAsDataURL(file)
       })
     }
@@ -69,10 +62,7 @@ export const createAssetStoreSlice: StateCreator<
     if (!forProduction) return scenes
 
     // Deep clone the scenes
-    const exportedScenes = JSON.parse(JSON.stringify(scenes)) as Record<
-      string,
-      Scene
-    >
+    const exportedScenes = JSON.parse(JSON.stringify(scenes)) as Record<string, Scene>
 
     // For production export, we need to convert data URLs to file paths
     Object.values(exportedScenes).forEach(scene => {
